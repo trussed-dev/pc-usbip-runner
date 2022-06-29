@@ -1,5 +1,6 @@
 APPNAME=usbip-simulation
 APPPATH=target/debug/usbip-simulation
+FLAGS=--features=enable-logs
 
 all: | start-sim attach finish-message
 
@@ -11,7 +12,7 @@ finish-message:
 .PHONY: start-sim
 start-sim: $(APPNAME)
 	-$(MAKE) stop
-	env RUST_LOG=debug ./$(APPNAME) &
+	env RUST_LOG=debug cargo run $(FLAGS) &
 	sleep 1
 
 .PHONY: attach
@@ -22,16 +23,19 @@ attach:
 	sudo usbip attach -r "localhost" -b "1-1"
 	sleep 5
 
+.PHONY: ci
+ci:
+	timeout 10 -k 5 $(MAKE)
+
 .PHONY: build
 build: $(APPNAME)
-	cp $(APPPATH) ./$(APPNAME) -v
 
 .PHONY: build-clean
 build-clean: | clean build
 
 .PHONY: $(APPNAME)
 $(APPNAME):
-	 cargo build --features=enable-logs
+	 cargo build $(FLAGS)
 
 .PHONY: stop
 stop:
