@@ -1,0 +1,63 @@
+[package]
+name = "solo-usbip"
+version = "0.0.1"
+authors = ["Nicolas Stalder <n@stalder.io>", "Conor Patrick <conor@solokeys.com>", "Szczepan Zalega <szczepan@nitrokey.com>"]
+edition = "2021"
+
+[[bin]]
+name = "usbip-simulation"
+path = "src/bin/main.rs"
+
+[dependencies]
+chacha20 = { version = "0.7", features = ["rng"] }
+generic-array = "0.14.3"
+heapless = "0.6"
+interchange = "0.2.0"
+nb = "1"
+log = { version = "0.4.14", default-features = false }
+clap = { version = "3.0.0", features = ["derive"] }
+clap-num = "1.0.0"
+
+apdu-dispatch = "0.1"
+ctap-types = "0.1"
+ctaphid-dispatch = "0.1"
+admin-app = "0.1"
+fido-authenticator = { version = "0.1", features = ["dispatch"] }
+trussed = { version = "0.1", features = ["clients-3"] }
+
+# components
+usbd-ctaphid = { path = "../../components/usbd-ctaphid" }
+
+# storage
+littlefs2 = "0.3.1"
+
+# USB related
+usbip-device = "*"
+usb-device = { version = "0.2.7", default-features = false }
+
+# Optional
+pretty_env_logger = { version = "0.4.0", optional = true }
+
+[features]
+default = ["no-buttons"]
+enable-logs = ["pretty_env_logger", "admin-app/log-all", "fido-authenticator/log-all"]
+
+# Use to auto-succeed every user presence check
+no-buttons = []
+
+# Reconfigure the NFC chip in any case
+reconfigure-nfc = []
+
+log-all = []
+log-none = []
+log-info = []
+log-debug = []
+log-warn = []
+log-error = []
+
+
+#[profile.release]
+#codegen-units = 1
+#opt-level = "z"
+#incremental = false
+#debug = true
