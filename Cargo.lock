@@ -1439,6 +1439,7 @@ checksum = "6be90410d4772074ea49525e2e753b65920b94b57eee21a6ef7b6a6fe6296245"
 [[package]]
 name = "usbd-ctaphid"
 version = "0.0.0-unreleased"
+source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#278428ef507757eb24aba479ee7148402c208216"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
