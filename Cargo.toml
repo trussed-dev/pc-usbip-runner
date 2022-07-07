@@ -26,7 +26,7 @@ fido-authenticator = { version = "0.1", features = ["dispatch"] }
 trussed = { version = "0.1", features = ["clients-3"] }
 
 # components
-usbd-ctaphid = { path = "components/usbd-ctaphid" }
+usbd-ctaphid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware" }
 
 # storage
 littlefs2 = "0.3.1"
