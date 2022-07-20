@@ -929,9 +929,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
+checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 
 [[package]]
 name = "opaque-debug"
@@ -1368,8 +1368,7 @@ checksum = "b1141d4d61095b28419e22cb0bbf02755f5e54e0526f97f1e3d1d160e60885fb"
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7173399ed80afefa978da6c601d9712d1de03f7c6e2b9d4630addfcc0598f5e"
+source = "git+https://github.com/trussed-dev/trussed#feb5971a38bb9002896712c7c55611fc23cb8ede"
 dependencies = [
  "aes",
  "bitflags",
@@ -1391,6 +1390,7 @@ dependencies = [
  "interchange",
  "littlefs2",
  "nb 1.0.0",
+ "once_cell",
  "p256-cortex-m4",
  "postcard",
  "rand_core",
