@@ -23,7 +23,7 @@ ctap-types = "0.1"
 ctaphid-dispatch = "0.1"
 admin-app = "0.1"
 fido-authenticator = { version = "0.1", features = ["dispatch"] }
-trussed = { version = "0.1", features = ["clients-3"] }
+trussed = { version = "0.1", features = ["clients-3", "virt"] }
 
 # components
 usbd-ctaphid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware" }
@@ -61,3 +61,6 @@ log-error = []
 #opt-level = "z"
 #incremental = false
 #debug = true
+
+[patch.crates-io]
+trussed = { git = "https://github.com/trussed-dev/trussed" }
