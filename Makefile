@@ -1,5 +1,4 @@
 APPNAME=usbip-simulation
-APPPATH=target/debug/usbip-simulation
 FLAGS=--features=enable-logs
 
 all: | start-sim attach finish-message
