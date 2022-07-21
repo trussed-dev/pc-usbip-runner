@@ -1276,31 +1276,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "solo-usbip"
-version = "0.0.1"
-dependencies = [
- "admin-app",
- "apdu-dispatch",
- "chacha20",
- "clap",
- "clap-num",
- "ctap-types",
- "ctaphid-dispatch",
- "fido-authenticator",
- "generic-array 0.14.5",
- "heapless 0.6.1",
- "interchange",
- "littlefs2",
- "log",
- "nb 1.0.0",
- "pretty_env_logger",
- "trussed",
- "usb-device",
- "usbd-ctaphid",
- "usbip-device",
-]
-
-[[package]]
 name = "spin"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1400,6 +1375,31 @@ dependencies = [
  "sha-1",
  "sha2",
  "zeroize",
+]
+
+[[package]]
+name = "trussed-usbip"
+version = "0.0.1"
+dependencies = [
+ "admin-app",
+ "apdu-dispatch",
+ "chacha20",
+ "clap",
+ "clap-num",
+ "ctap-types",
+ "ctaphid-dispatch",
+ "fido-authenticator",
+ "generic-array 0.14.5",
+ "heapless 0.6.1",
+ "interchange",
+ "littlefs2",
+ "log",
+ "nb 1.0.0",
+ "pretty_env_logger",
+ "trussed",
+ "usb-device",
+ "usbd-ctaphid",
+ "usbip-device",
 ]
 
 [[package]]
