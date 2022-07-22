@@ -1,16 +1,16 @@
+#[cfg(feature = "ctaphid")]
+mod ctaphid;
+
 use std::{cell::RefCell, rc::Rc, thread, time::Duration};
 
-use ctaphid_dispatch::{dispatch::Dispatch, types::HidInterchange};
-use interchange::Interchange as _;
 use trussed::{
     virt::{self, Platform, StoreProvider},
     ClientImplementation, Service,
 };
 use usb_device::{
-    bus::UsbBusAllocator,
-    device::{UsbDeviceBuilder, UsbVidPid},
+    bus::{UsbBus, UsbBusAllocator},
+    device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
 };
-use usbd_ctaphid::CtapHid;
 use usbip_device::UsbIpBus;
 
 pub type Client<S> = ClientImplementation<Syscall<Platform<S>>>;
@@ -30,6 +30,7 @@ impl Options {
 }
 
 pub enum Application {
+    #[cfg(feature = "ctaphid")]
     Ctaphid(Box<dyn ctaphid_dispatch::app::App>),
 }
 
@@ -38,11 +39,21 @@ struct ApplicationSpec<S: StoreProvider> {
     constructor: Box<dyn Fn(Client<S>) -> Application>,
 }
 
+impl<S: StoreProvider> ApplicationSpec<S> {
+    fn create(&self, service: &mut Rc<RefCell<Service<Platform<S>>>>) -> Application {
+        let client = service
+            .borrow_mut()
+            .try_new_client(&self.id, Syscall::from(service.clone()))
+            .expect("failed to create client");
+        (self.constructor)(client)
+    }
+}
+
 pub struct Runner<S: StoreProvider> {
     store: S,
     options: Options,
     init_platform: Option<Box<dyn Fn(&mut Platform<S>)>>,
-    add_apps: Vec<ApplicationSpec<S>>,
+    apps: Vec<ApplicationSpec<S>>,
 }
 
 impl<S: StoreProvider + Clone> Runner<S> {
@@ -51,7 +62,7 @@ impl<S: StoreProvider + Clone> Runner<S> {
             store,
             options,
             init_platform: Default::default(),
-            add_apps: Default::default(),
+            apps: Default::default(),
         }
     }
 
@@ -68,13 +79,14 @@ impl<S: StoreProvider + Clone> Runner<S> {
         N: Into<String>,
         F: Fn(Client<S>) -> Application + 'static,
     {
-        self.add_apps.push(ApplicationSpec {
+        self.apps.push(ApplicationSpec {
             id: id.into(),
             constructor: Box::new(f),
         });
         self
     }
 
+    #[cfg(feature = "ctaphid")]
     pub fn add_ctaphid_app<N, F, A>(&mut self, id: N, f: F) -> &mut Self
     where
         N: Into<String>,
@@ -90,61 +102,51 @@ impl<S: StoreProvider + Clone> Runner<S> {
                 init_platform(&mut platform);
             }
 
-            log::info!("Initializing allocator");
             // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
             let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
 
-            let (ctaphid_rq, ctaphid_rp) = HidInterchange::claim().unwrap();
-            let mut ctaphid = CtapHid::new(&bus_allocator, ctaphid_rq, 0u32)
-                .implements_ctap1()
-                .implements_ctap2()
-                .implements_wink();
-            let mut ctaphid_dispatch = Dispatch::new(ctaphid_rp);
+            #[cfg(feature = "ctaphid")]
+            let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator);
 
-            let mut usb_builder = UsbDeviceBuilder::new(&bus_allocator, self.options.vid_pid());
-            if let Some(manufacturer) = &self.options.manufacturer {
-                usb_builder = usb_builder.manufacturer(manufacturer);
-            }
-            if let Some(product) = &self.options.product {
-                usb_builder = usb_builder.product(product);
-            }
-            if let Some(serial_number) = &self.options.serial_number {
-                usb_builder = usb_builder.serial_number(serial_number);
-            }
-            let mut usb_bus = usb_builder.device_class(0x03).device_sub_class(0).build();
-
-            let service = Rc::new(RefCell::new(Service::new(platform)));
-            let syscall = Syscall {
-                service: service.clone(),
-            };
-
-            let mut apps = Vec::new();
-            for spec in &self.add_apps {
-                let client = service
-                    .borrow_mut()
-                    .try_new_client(&spec.id, syscall.clone())
-                    .expect("failed to create client");
-                apps.push((spec.constructor)(client));
-            }
+            let mut usb_device = build_device(&bus_allocator, &self.options);
+            let mut service = Rc::new(RefCell::new(Service::new(platform)));
+            let mut apps = self.create_apps(&mut service);
 
             log::info!("Ready for work");
             loop {
                 thread::sleep(Duration::from_millis(5));
-                let mut ctaphid_apps = ctaphid_apps(&mut apps);
-                ctaphid_dispatch.poll(&mut ctaphid_apps);
-                usb_bus.poll(&mut [&mut ctaphid]);
+
+                #[cfg(feature = "ctaphid")]
+                ctaphid_dispatch.poll(&mut ctaphid::apps(&mut apps));
+
+                usb_device.poll(&mut [
+                    #[cfg(feature = "ctaphid")]
+                    &mut ctaphid,
+                ]);
             }
         })
     }
+
+    fn create_apps(&self, service: &mut Rc<RefCell<Service<Platform<S>>>>) -> Vec<Application> {
+        self.apps.iter().map(|app| app.create(service)).collect()
+    }
 }
 
-fn ctaphid_apps(apps: &mut [Application]) -> Vec<&mut dyn ctaphid_dispatch::app::App> {
-    let mut ctaphid_apps = Vec::new();
-    for app in apps {
-        let Application::Ctaphid(app) = app;
-        ctaphid_apps.push(app.as_mut() as &mut dyn ctaphid_dispatch::app::App);
+fn build_device<'a, B: UsbBus>(
+    bus_allocator: &'a UsbBusAllocator<B>,
+    options: &'a Options,
+) -> UsbDevice<'a, B> {
+    let mut usb_builder = UsbDeviceBuilder::new(bus_allocator, options.vid_pid());
+    if let Some(manufacturer) = &options.manufacturer {
+        usb_builder = usb_builder.manufacturer(manufacturer);
     }
-    ctaphid_apps
+    if let Some(product) = &options.product {
+        usb_builder = usb_builder.product(product);
+    }
+    if let Some(serial_number) = &options.serial_number {
+        usb_builder = usb_builder.serial_number(serial_number);
+    }
+    usb_builder.device_class(0x03).device_sub_class(0).build()
 }
 
 pub struct Syscall<P: trussed::Platform> {
@@ -163,5 +165,11 @@ impl<P: trussed::Platform> Clone for Syscall<P> {
         Self {
             service: self.service.clone(),
         }
+    }
+}
+
+impl<P: trussed::Platform> From<Rc<RefCell<Service<P>>>> for Syscall<P> {
+    fn from(service: Rc<RefCell<Service<P>>>) -> Self {
+        Self { service }
     }
 }

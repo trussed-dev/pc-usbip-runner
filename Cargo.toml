@@ -8,12 +8,12 @@ edition = "2021"
 interchange = "0.2.0"
 log = { version = "0.4.14", default-features = false }
 trussed = { version = "0.1", features = ["virt"] }
-
-# USB related
-ctaphid-dispatch = "0.1"
 usb-device = { version = "0.2.7", default-features = false }
-usbd-ctaphid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware" }
 usbip-device = "0.1.4"
+
+# ctaphid
+ctaphid-dispatch = { version = "0.1", optional = true }
+usbd-ctaphid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware", optional = true }
 
 [dev-dependencies]
 clap = { version = "3.0.0", features = ["derive"] }
@@ -24,6 +24,14 @@ trussed = { version = "0.1", features = ["clients-3"] }
 # applications
 admin-app = { version = "0.1", features = ["log-all"] }
 fido-authenticator = { version = "0.1", features = ["dispatch", "log-all"] }
+
+[features]
+default = ["ctaphid"]
+ctaphid = ["ctaphid-dispatch", "usbd-ctaphid"]
+
+[[example]]
+name = "fido"
+required-features = ["ctaphid"]
 
 [patch.crates-io]
 trussed = { git = "https://github.com/trussed-dev/trussed", rev = "3da56d8" }
