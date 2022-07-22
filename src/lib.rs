@@ -93,12 +93,14 @@ impl<S: StoreProvider + Clone> Runner<S> {
             log::info!("Initializing allocator");
             // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
             let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
+
             let (ctaphid_rq, ctaphid_rp) = HidInterchange::claim().unwrap();
             let mut ctaphid = CtapHid::new(&bus_allocator, ctaphid_rq, 0u32)
                 .implements_ctap1()
                 .implements_ctap2()
                 .implements_wink();
             let mut ctaphid_dispatch = Dispatch::new(ctaphid_rp);
+
             let mut usb_builder = UsbDeviceBuilder::new(&bus_allocator, self.options.vid_pid());
             if let Some(manufacturer) = &self.options.manufacturer {
                 usb_builder = usb_builder.manufacturer(manufacturer);
