@@ -1,5 +1,4 @@
-APPNAME=usbip-simulation
-FLAGS=--features=enable-logs
+EXAMPLE_NAME := fido
 
 all: | start-sim attach finish-message
 
@@ -9,9 +8,9 @@ finish-message:
 	@echo "Done. Device should be visible in your system now. Run 'make stop' to disconnect it."
 
 .PHONY: start-sim
-start-sim: $(APPNAME)
+start-sim: build
 	-$(MAKE) stop
-	env RUST_LOG=debug cargo run $(FLAGS) &
+	env RUST_LOG=debug cargo run --example $(EXAMPLE_NAME) &
 	sleep 1
 
 .PHONY: attach
@@ -27,19 +26,16 @@ ci:
 	timeout 10 -k 5 $(MAKE)
 
 .PHONY: build
-build: $(APPNAME)
+build:
+	 cargo build --example $(EXAMPLE_NAME)
 
 .PHONY: build-clean
 build-clean: | clean build
 
-.PHONY: $(APPNAME)
-$(APPNAME):
-	 cargo build $(FLAGS)
-
 .PHONY: stop
 stop:
 	-sudo usbip detach -p "00"
-	killall $(APPNAME)
+	killall $(EXAMPLE_NAME)
 
 .PHONY: setup-fedora
 setup-fedora:
@@ -49,12 +45,11 @@ setup-fedora:
 .PHONY: clean
 clean:
 	cargo clean
-	rm $(APPNAME) -v
+	rm -r cargo-cache
 
 .PHONY: build-docker
-CMD=make -C /app/runners/pc-usbip/ build
+CMD=make -C /app/ build
 build-docker:
 	docker build -t usbip .
 	mkdir -p cargo-cache
-	docker run -it --rm -v $(PWD)/cargo-cache:/root/.cargo -v $(PWD)/../../:/app usbip $(CMD)
-	touch $(APPNAME)
+	docker run -it --rm -v $(PWD)/cargo-cache:/root/.cargo -v $(PWD):/app usbip $(CMD)

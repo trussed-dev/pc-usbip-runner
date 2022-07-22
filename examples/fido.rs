@@ -113,7 +113,6 @@ impl trussed::platform::UserInterface for UserInterface {
 }
 
 fn main() {
-    #[cfg(feature = "enable-logs")]
     pretty_env_logger::init();
 
     let args = Args::parse();
@@ -161,7 +160,7 @@ fn store_file(platform: &impl Platform, host_file: &Path, device_file: &str) {
     trussed::store::store(
         platform.store(),
         trussed::types::Location::Internal,
-        &littlefs2::path::PathBuf::from(device_file),
+        &trussed::types::PathBuf::from(device_file),
         &data,
     )
     .expect("failed to store file");
