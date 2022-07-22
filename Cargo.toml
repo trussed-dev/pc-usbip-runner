@@ -63,4 +63,4 @@ log-error = []
 #debug = true
 
 [patch.crates-io]
-trussed = { git = "https://github.com/trussed-dev/trussed" }
+trussed = { git = "https://github.com/trussed-dev/trussed", rev = "3da56d8" }
