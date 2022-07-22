@@ -1,16 +1,11 @@
-use std::cell::RefCell;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
 
 use clap::Parser;
 use clap_num::maybe_hex;
 
-use interchange::Interchange;
 use log::info;
-use usb_device::{bus::UsbBusAllocator, prelude::*};
-use usbip_device::UsbIpBus;
-use trussed::{Platform as _, virt};
 use trussed::platform::{consent, reboot, ui};
+use trussed::{virt, Platform};
 
 use fido_authenticator;
 use usbd_ctaphid::constants::MESSAGE_SIZE;
@@ -74,25 +69,6 @@ impl admin_app::Reboot for Reboot {
     }
 }
 
-struct Syscall<P: trussed::Platform> {
-    service: Rc<RefCell<trussed::service::Service<P>>>,
-}
-
-impl<P: trussed::Platform> trussed::client::Syscall for Syscall<P> {
-    fn syscall(&mut self) {
-        log::debug!("syscall");
-        self.service.borrow_mut().process();
-    }
-}
-
-impl<P: trussed::Platform> Clone for Syscall<P> {
-    fn clone(&self) -> Self {
-        Self {
-            service: self.service.clone(),
-        }
-    }
-}
-
 struct UserInterface {
     start_time: std::time::Instant,
 }
@@ -142,72 +118,44 @@ fn main() {
 
     let args = Args::parse();
 
+    let store = virt::Filesystem::new(args.state_file);
+    let options = trussed_usbip::Options {
+        manufacturer: Some(args.manufacturer),
+        product: Some(args.name),
+        serial_number: Some(args.serial),
+        vid: args.vid,
+        pid: args.pid,
+    };
+
     log::info!("Initializing Trussed");
+    trussed_usbip::Runner::new(store, options)
+        .init_platform(move |platform| {
+            let ui: Box<dyn trussed::platform::UserInterface> = Box::new(UserInterface::new());
+            platform.user_interface().set_inner(ui);
 
-    virt::with_platform(virt::FilesystemStore::new(&args.state_file), |mut platform| {
-        let ui: Box<dyn trussed::platform::UserInterface> = Box::new(UserInterface::new());
-        platform.user_interface().set_inner(ui);
-
-        if let Some(fido_key) = args.fido_key {
-            store(&platform, &fido_key, "fido/sec/00");
-        }
-        if let Some(fido_cert) = args.fido_cert {
-            store(&platform, &fido_cert, "fido/x5c/00");
-        }
-
-        let trussed_service = Rc::new(RefCell::new(trussed::service::Service::new(
-            platform,
-        )));
-
-        log::info!("Initializing allocator");
-        // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
-        let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
-        let (ctaphid_rq, ctaphid_rp) = ctaphid_dispatch::types::HidInterchange::claim().unwrap();
-        let mut ctaphid = usbd_ctaphid::CtapHid::new(&bus_allocator, ctaphid_rq, 0u32)
-            .implements_ctap1()
-            .implements_ctap2()
-            .implements_wink();
-        let mut ctaphid_dispatch = ctaphid_dispatch::dispatch::Dispatch::new(ctaphid_rp);
-        let mut usb_bus = UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(args.vid, args.pid))
-            .manufacturer(&args.manufacturer)
-            .product(&args.name)
-            .serial_number(&args.serial)
-            .device_class(0x03)
-            .device_sub_class(0)
-            .build();
-
-        let syscall = Syscall {
-            service: trussed_service.clone(),
-        };
-
-        let trussed_client = trussed_service
-            .borrow_mut()
-            .try_new_client("fido", syscall.clone())
-            .unwrap();
-        let mut fido_app = fido_authenticator::Authenticator::new(
-            trussed_client,
-            fido_authenticator::Conforming {},
-            fido_authenticator::Config {
-                max_msg_size: MESSAGE_SIZE,
-            },
-        );
-
-        let trussed_client = trussed_service
-            .borrow_mut()
-            .try_new_client("admin", syscall.clone())
-            .unwrap();
-        let mut admin_app = admin_app::App::<_, Reboot>::new(trussed_client, [0; 16], 0);
-
-        log::info!("Ready for work");
-        loop {
-            std::thread::sleep(std::time::Duration::from_millis(5));
-            ctaphid_dispatch.poll(&mut [&mut fido_app, &mut admin_app]);
-            usb_bus.poll(&mut [&mut ctaphid]);
-        }
-    });
+            if let Some(fido_key) = &args.fido_key {
+                store_file(platform, fido_key, "fido/sec/00");
+            }
+            if let Some(fido_cert) = &args.fido_cert {
+                store_file(platform, fido_cert, "fido/x5c/00");
+            }
+        })
+        .add_ctaphid_app("fido", |client| {
+            fido_authenticator::Authenticator::new(
+                client,
+                fido_authenticator::Conforming {},
+                fido_authenticator::Config {
+                    max_msg_size: MESSAGE_SIZE,
+                },
+            )
+        })
+        .add_ctaphid_app("admin", |client| {
+            admin_app::App::<_, Reboot>::new(client, [0; 16], 0)
+        })
+        .exec();
 }
 
-fn store(platform: &impl trussed::Platform, host_file: &Path, device_file: &str) {
+fn store_file(platform: &impl Platform, host_file: &Path, device_file: &str) {
     log::info!("Writing {} to file system", device_file);
     let data = std::fs::read(host_file).expect("failed to read file");
     trussed::store::store(
