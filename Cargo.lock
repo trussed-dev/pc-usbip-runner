@@ -21,8 +21,8 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b613b8e1e3cf911a086f53f03bf286f52fd7a7258e4fa606f0ef220d39d8877"
 dependencies = [
- "generic-array 0.14.5",
- "heapless 0.7.14",
+ "generic-array",
+ "heapless",
 ]
 
 [[package]]
@@ -53,21 +53,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4984da9e0c0fa55506888d6fa48bab859b20d788654267bebedfac64f54dff17"
 dependencies = [
  "delog",
- "heapless 0.7.14",
+ "heapless",
  "interchange",
  "iso7816",
-]
-
-[[package]]
-name = "as-slice"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45403b49e3954a4b8428a0ac21a4b7afadccf92bfd96273f1a58cd4812496ae0"
-dependencies = [
- "generic-array 0.12.4",
- "generic-array 0.13.3",
- "generic-array 0.14.5",
- "stable_deref_trait",
 ]
 
 [[package]]
@@ -154,7 +142,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4152116fd6e9dadb291ae18fc1ec3575ed6d84c29642d97890f4b4a3417297e4"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array",
 ]
 
 [[package]]
@@ -186,7 +174,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d516e3e353d5fc5ee156028f43224033430fd08ef05f8d5dba18a57a4ee5df49"
 dependencies = [
  "delog",
- "heapless 0.7.14",
+ "heapless",
  "heapless-bytes",
  "serde",
 ]
@@ -244,7 +232,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ee52072ec15386f770805afd189a01c8841be8696bed250fa2f13c4c0d6dfb7"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array",
 ]
 
 [[package]]
@@ -355,7 +343,7 @@ version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f83bd3bb4314701c568e340cd8cf78c975aa0ca79e03d3f6d1677d5b0c9c0c03"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array",
  "rand_core",
  "subtle",
  "zeroize",
@@ -367,7 +355,7 @@ version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1d1a86f49236c215f271d40892d5fc950490551400b02ef360692c29815c714"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array",
  "subtle",
 ]
 
@@ -391,7 +379,7 @@ dependencies = [
  "cbor-smol",
  "cosey",
  "delog",
- "heapless 0.7.14",
+ "heapless",
  "heapless-bytes",
  "interchange",
  "iso7816",
@@ -407,7 +395,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24f378100ce2ecda0bc9c882254583168b63afd788f277f45d494c33b4493d5a"
 dependencies = [
  "delog",
- "heapless 0.7.14",
+ "heapless",
  "heapless-bytes",
  "interchange",
 ]
@@ -466,7 +454,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3dd60d1080a57a05ab032377049e0591415d2b31afd7028356dbf3cc6dcb066"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array",
 ]
 
 [[package]]
@@ -498,7 +486,7 @@ checksum = "beca177dcb8eb540133e7680baff45e7cc4d93bf22002676cec549f82343721b"
 dependencies = [
  "crypto-bigint",
  "ff",
- "generic-array 0.14.5",
+ "generic-array",
  "group",
  "rand_core",
  "subtle",
@@ -557,7 +545,7 @@ dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
  "delog",
- "heapless 0.7.14",
+ "heapless",
  "interchange",
  "iso7816",
  "littlefs2",
@@ -575,7 +563,7 @@ checksum = "e3df5b1466eec7b03f5848d8388b99975a0ba1a26510db61ba87c2a6177938e5"
 dependencies = [
  "delog",
  "flexiber_derive",
- "heapless 0.7.14",
+ "heapless",
 ]
 
 [[package]]
@@ -588,24 +576,6 @@ dependencies = [
  "quote",
  "syn",
  "synstructure",
-]
-
-[[package]]
-name = "generic-array"
-version = "0.12.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffdf9f34f1447443d37393cc6c2b8313aebddcd96906caf34e54c68d8e57d7bd"
-dependencies = [
- "typenum",
-]
-
-[[package]]
-name = "generic-array"
-version = "0.13.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f797e67af32588215eaaab8327027ee8e71b9dd0b2b26996aedf20c030fce309"
-dependencies = [
- "typenum",
 ]
 
 [[package]]
@@ -643,15 +613,6 @@ checksum = "eabb4a44450da02c90444cf74558da904edde8fb4e9035a9a6a4e15445af0bd7"
 
 [[package]]
 name = "hash32"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4041af86e63ac4298ce40e5cca669066e75b6f1aa3390fe2561ffa5e1d9f4cc"
-dependencies = [
- "byteorder",
-]
-
-[[package]]
-name = "hash32"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0c35f58762feb77d74ebe43bdbc3210f09be9fe6742234d573bacc26ed92b67"
@@ -667,24 +628,12 @@ checksum = "db0d4cf898abf0081f964436dc980e96670a0f36863e4b83aaacdb65c9d7ccc3"
 
 [[package]]
 name = "heapless"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "634bd4d29cbf24424d0a4bfcbf80c6960129dc24424752a7d1d1390607023422"
-dependencies = [
- "as-slice",
- "generic-array 0.14.5",
- "hash32 0.1.1",
- "stable_deref_trait",
-]
-
-[[package]]
-name = "heapless"
 version = "0.7.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "065681e99f9ef7e0e813702a0326aedbcbbde7db5e55f097aedd1bf50b9dca43"
 dependencies = [
  "atomic-polyfill",
- "hash32 0.2.1",
+ "hash32",
  "rustc_version 0.4.0",
  "serde",
  "spin",
@@ -697,7 +646,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7285eba272c6af3e9f15fb9e1c1b6e7d35aa70580ffe0d47af017e97dfb6f48b"
 dependencies = [
- "heapless 0.7.14",
+ "heapless",
  "serde",
  "serde_cbor",
  "typenum",
@@ -766,7 +715,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a921942ff6163b5dc8be6996deed8193064db1f57ae3c327ac29a7c3cfffc71d"
 dependencies = [
  "delog",
- "heapless 0.7.14",
+ "heapless",
 ]
 
 [[package]]
@@ -797,8 +746,8 @@ dependencies = [
  "cstr_core",
  "cty",
  "delog",
- "generic-array 0.14.5",
- "heapless 0.7.14",
+ "generic-array",
+ "heapless",
  "littlefs2-sys",
  "serde",
 ]
@@ -1005,7 +954,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a25c0b0ae06fcffe600ad392aabfa535696c8973f2253d9ac83171924c58a858"
 dependencies = [
- "heapless 0.7.14",
+ "heapless",
  "postcard-cobs",
  "serde",
 ]
@@ -1276,31 +1225,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "solo-usbip"
-version = "0.0.1"
-dependencies = [
- "admin-app",
- "apdu-dispatch",
- "chacha20",
- "clap",
- "clap-num",
- "ctap-types",
- "ctaphid-dispatch",
- "fido-authenticator",
- "generic-array 0.14.5",
- "heapless 0.6.1",
- "interchange",
- "littlefs2",
- "log",
- "nb 1.0.0",
- "pretty_env_logger",
- "trussed",
- "usb-device",
- "usbd-ctaphid",
- "usbip-device",
-]
-
-[[package]]
 name = "spin"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1368,7 +1292,7 @@ checksum = "b1141d4d61095b28419e22cb0bbf02755f5e54e0526f97f1e3d1d160e60885fb"
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed#feb5971a38bb9002896712c7c55611fc23cb8ede"
+source = "git+https://github.com/trussed-dev/trussed?rev=3da56d8#3da56d8e41b9de64b852ed2bdcfd623118b09c3d"
 dependencies = [
  "aes",
  "bitflags",
@@ -1382,8 +1306,8 @@ dependencies = [
  "des",
  "embedded-hal",
  "flexiber",
- "generic-array 0.14.5",
- "heapless 0.7.14",
+ "generic-array",
+ "heapless",
  "heapless-bytes",
  "hex-literal",
  "hmac",
@@ -1400,6 +1324,24 @@ dependencies = [
  "sha-1",
  "sha2",
  "zeroize",
+]
+
+[[package]]
+name = "trussed-usbip"
+version = "0.0.1"
+dependencies = [
+ "admin-app",
+ "clap",
+ "clap-num",
+ "ctaphid-dispatch",
+ "fido-authenticator",
+ "interchange",
+ "log",
+ "pretty_env_logger",
+ "trussed",
+ "usb-device",
+ "usbd-ctaphid",
+ "usbip-device",
 ]
 
 [[package]]
@@ -1426,7 +1368,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f214e8f697e925001e66ec2c6e37a4ef93f0f78c2eed7814394e10c62025b05"
 dependencies = [
- "generic-array 0.14.5",
+ "generic-array",
  "subtle",
 ]
 
@@ -1445,7 +1387,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
- "heapless 0.7.14",
+ "heapless",
  "heapless-bytes",
  "interchange",
  "serde",
