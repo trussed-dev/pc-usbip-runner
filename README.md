@@ -3,17 +3,13 @@
 This runner allows using USB/IP as a means to simulate device connection
 to the OS, and should allow faster development of the embedded applications.
 
-Platform and storage implementations are taken from the Trussed tutorial:
-- https://github.com/trussed-dev/trussed-totp-pc-tutorial
-
 Remarks:
-- At the moment FIDO app only (to be extended with Admin and Provision apps);
+- Extensible with CTAP apps: currently FIDO and Admin are active;
 - Works with Chromium and pynitrokey (with a patched fido2.hid module) [2];
 - Written length returns "1", which confuse client HID applications
   (Chromium shows error in logs, but ignores it; pynitrokey fails);
-- It is not possible to set the FIDO certificate, thus x5c response
-  is empty;
 - Does not work with Firefox at the moment;
+- Allows to inject own FIDO certificates, and device properties;
 - Requires multiple `usbip attach` calls to make it work [1].
 
 [1] https://github.com/Sawchord/usbip-device#known-bugs
