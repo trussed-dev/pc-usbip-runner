@@ -1374,9 +1374,9 @@ dependencies = [
 
 [[package]]
 name = "usb-device"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6be90410d4772074ea49525e2e753b65920b94b57eee21a6ef7b6a6fe6296245"
+checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 
 [[package]]
 name = "usbd-ctaphid"
@@ -1396,9 +1396,9 @@ dependencies = [
 
 [[package]]
 name = "usbip-device"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7360c60ef8f529275589238b51de334ecf76aac0bffc2a2638414bc9da09731"
+checksum = "2e7a0b57d68d666cc85d8bfe8a32fb4196e8eb89b611658a0624af6428e7a2fd"
 dependencies = [
  "bitflags",
  "log",
