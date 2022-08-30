@@ -9,7 +9,7 @@ interchange = "0.2.0"
 log = { version = "0.4.14", default-features = false }
 trussed = { version = "0.1", features = ["virt"] }
 usb-device = { version = "0.2.7", default-features = false }
-usbip-device = "0.1.4"
+usbip-device = "0.1.5"
 
 # ctaphid
 ctaphid-dispatch = { version = "0.1", optional = true }

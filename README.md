@@ -5,18 +5,11 @@ to the OS, and should allow faster development of the embedded applications.
 
 Remarks:
 - Extensible with CTAP apps: currently FIDO and Admin are active;
-- Works with Chromium and pynitrokey (with a patched fido2.hid module) [2];
-- Written length returns "1", which confuse client HID applications
-  (Chromium shows error in logs, but ignores it; pynitrokey fails);
 - Does not work with Firefox at the moment;
 - Allows to inject own FIDO certificates, and device properties;
 - Requires multiple `usbip attach` calls to make it work [1].
 
 [1] https://github.com/Sawchord/usbip-device#known-bugs
-
-[2] The change is rather simple: replace `raise OSError("failed to write entire packet")` with `pass` in `FileCtapHidConnection.write_packet` in fido2’s `hid/base.py`. The patch is provided at [3].
-
-[3] ./fido2-patch/0001-Ignore-difference-between-the-sent-data-size-and-rep.patch
 
 ## Setup
 
