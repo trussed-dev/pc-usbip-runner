@@ -109,7 +109,7 @@ impl<S: StoreProvider + Clone> Runner<S> {
             let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator);
 
             let mut usb_device = build_device(&bus_allocator, &self.options);
-            let mut service = Rc::new(RefCell::new(Service::new(platform)));
+            let mut service = Rc::new(RefCell::new(Service::from(platform)));
             let mut apps = self.create_apps(&mut service);
 
             log::info!("Ready for work");
