@@ -29,31 +29,20 @@ impl Options {
     }
 }
 
-pub enum Application {
+pub trait Apps<C: trussed::Client, D> {
+    fn new(make_client: impl Fn(&str) -> C, data: D) -> Self;
+
     #[cfg(feature = "ctaphid")]
-    Ctaphid(Box<dyn ctaphid_dispatch::app::App>),
-}
-
-struct ApplicationSpec<S: StoreProvider> {
-    id: String,
-    constructor: Box<dyn Fn(Client<S>) -> Application>,
-}
-
-impl<S: StoreProvider> ApplicationSpec<S> {
-    fn create(&self, service: &mut Rc<RefCell<Service<Platform<S>>>>) -> Application {
-        let client = service
-            .borrow_mut()
-            .try_new_client(&self.id, Syscall::from(service.clone()))
-            .expect("failed to create client");
-        (self.constructor)(client)
-    }
+    fn with_ctaphid_apps<T>(
+        &mut self,
+        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App]) -> T,
+    ) -> T;
 }
 
 pub struct Runner<S: StoreProvider> {
     store: S,
     options: Options,
     init_platform: Option<Box<dyn Fn(&mut Platform<S>)>>,
-    apps: Vec<ApplicationSpec<S>>,
 }
 
 impl<S: StoreProvider + Clone> Runner<S> {
@@ -62,7 +51,6 @@ impl<S: StoreProvider + Clone> Runner<S> {
             store,
             options,
             init_platform: Default::default(),
-            apps: Default::default(),
         }
     }
 
@@ -74,29 +62,7 @@ impl<S: StoreProvider + Clone> Runner<S> {
         self
     }
 
-    pub fn add_app<N, F>(&mut self, id: N, f: F) -> &mut Self
-    where
-        N: Into<String>,
-        F: Fn(Client<S>) -> Application + 'static,
-    {
-        self.apps.push(ApplicationSpec {
-            id: id.into(),
-            constructor: Box::new(f),
-        });
-        self
-    }
-
-    #[cfg(feature = "ctaphid")]
-    pub fn add_ctaphid_app<N, F, A>(&mut self, id: N, f: F) -> &mut Self
-    where
-        N: Into<String>,
-        F: Fn(Client<S>) -> A + 'static,
-        A: ctaphid_dispatch::app::App + 'static,
-    {
-        self.add_app(id, move |client| Application::Ctaphid(Box::new(f(client))))
-    }
-
-    pub fn exec(&self) {
+    pub fn exec<A: Apps<Client<S>, D>, D>(&self, data: D) {
         virt::with_platform(self.store.clone(), |mut platform| {
             if let Some(init_platform) = &self.init_platform {
                 init_platform(&mut platform);
@@ -109,15 +75,24 @@ impl<S: StoreProvider + Clone> Runner<S> {
             let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator);
 
             let mut usb_device = build_device(&bus_allocator, &self.options);
-            let mut service = Rc::new(RefCell::new(Service::from(platform)));
-            let mut apps = self.create_apps(&mut service);
+            let service = Rc::new(RefCell::new(Service::from(platform)));
+            let syscall = Syscall::from(service.clone());
+            let mut apps = A::new(
+                |id| {
+                    service
+                        .borrow_mut()
+                        .try_new_client(id, syscall.clone())
+                        .expect("failed to create client")
+                },
+                data,
+            );
 
             log::info!("Ready for work");
             loop {
                 thread::sleep(Duration::from_millis(5));
 
                 #[cfg(feature = "ctaphid")]
-                ctaphid_dispatch.poll(&mut ctaphid::apps(&mut apps));
+                apps.with_ctaphid_apps(|apps| ctaphid_dispatch.poll(apps));
 
                 usb_device.poll(&mut [
                     #[cfg(feature = "ctaphid")]
@@ -125,10 +100,6 @@ impl<S: StoreProvider + Clone> Runner<S> {
                 ]);
             }
         })
-    }
-
-    fn create_apps(&self, service: &mut Rc<RefCell<Service<Platform<S>>>>) -> Vec<Application> {
-        self.apps.iter().map(|app| app.create(service)).collect()
     }
 }
 

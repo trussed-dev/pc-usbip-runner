@@ -2,12 +2,11 @@ use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use clap_num::maybe_hex;
-
 use log::info;
 use trussed::platform::{consent, reboot, ui};
-use trussed::{virt, Platform};
+use trussed::{virt, Client, Platform};
 
-use fido_authenticator;
+use fido_authenticator::TrussedRequirements;
 use usbd_ctaphid::constants::MESSAGE_SIZE;
 
 pub type FidoConfig = fido_authenticator::Config;
@@ -112,6 +111,32 @@ impl trussed::platform::UserInterface for UserInterface {
     }
 }
 
+struct Apps<C: Client + TrussedRequirements> {
+    fido: fido_authenticator::Authenticator<fido_authenticator::Conforming, C>,
+    admin: admin_app::App<C, Reboot>,
+}
+
+impl<C: Client + TrussedRequirements> trussed_usbip::Apps<C, ()> for Apps<C> {
+    fn new(make_client: impl Fn(&str) -> C, _data: ()) -> Self {
+        let fido = fido_authenticator::Authenticator::new(
+            make_client("fido"),
+            fido_authenticator::Conforming {},
+            fido_authenticator::Config {
+                max_msg_size: MESSAGE_SIZE,
+            },
+        );
+        let admin = admin_app::App::new(make_client("admin"), [0; 16], 0);
+        Self { fido, admin }
+    }
+
+    fn with_ctaphid_apps<T>(
+        &mut self,
+        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App]) -> T,
+    ) -> T {
+        f(&mut [&mut self.fido, &mut self.admin])
+    }
+}
+
 fn main() {
     pretty_env_logger::init();
 
@@ -140,19 +165,7 @@ fn main() {
                 store_file(platform, fido_cert, "fido/x5c/00");
             }
         })
-        .add_ctaphid_app("fido", |client| {
-            fido_authenticator::Authenticator::new(
-                client,
-                fido_authenticator::Conforming {},
-                fido_authenticator::Config {
-                    max_msg_size: MESSAGE_SIZE,
-                },
-            )
-        })
-        .add_ctaphid_app("admin", |client| {
-            admin_app::App::<_, Reboot>::new(client, [0; 16], 0)
-        })
-        .exec();
+        .exec::<Apps<_>, _>(());
 }
 
 fn store_file(platform: &impl Platform, host_file: &Path, device_file: &str) {
