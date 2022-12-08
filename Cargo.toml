@@ -18,6 +18,7 @@ usbd-ctaphid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware", option
 [dev-dependencies]
 clap = { version = "3.0.0", features = ["derive"] }
 clap-num = "1.0.0"
+delog = { version = "0.1.6", features = ["std-log"] }
 pretty_env_logger = "0.4.0"
 trussed = { version = "0.1", features = ["clients-3"] }
 
