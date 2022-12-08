@@ -1292,7 +1292,7 @@ checksum = "b1141d4d61095b28419e22cb0bbf02755f5e54e0526f97f1e3d1d160e60885fb"
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed?rev=3da56d8#3da56d8e41b9de64b852ed2bdcfd623118b09c3d"
+source = "git+https://github.com/trussed-dev/trussed?rev=fdf96da#fdf96da43b0d09e59e34778d064650d362d24a3d"
 dependencies = [
  "aes",
  "bitflags",
@@ -1314,7 +1314,6 @@ dependencies = [
  "interchange",
  "littlefs2",
  "nb 1.0.0",
- "once_cell",
  "p256-cortex-m4",
  "postcard",
  "rand_core",

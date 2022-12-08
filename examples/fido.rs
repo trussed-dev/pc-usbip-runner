@@ -129,7 +129,8 @@ fn main() {
     log::info!("Initializing Trussed");
     trussed_usbip::Runner::new(store, options)
         .init_platform(move |platform| {
-            let ui: Box<dyn trussed::platform::UserInterface> = Box::new(UserInterface::new());
+            let ui: Box<dyn trussed::platform::UserInterface + Send + Sync> =
+                Box::new(UserInterface::new());
             platform.user_interface().set_inner(ui);
 
             if let Some(fido_key) = &args.fido_key {
