@@ -1333,6 +1333,7 @@ dependencies = [
  "clap",
  "clap-num",
  "ctaphid-dispatch",
+ "delog",
  "fido-authenticator",
  "interchange",
  "log",
