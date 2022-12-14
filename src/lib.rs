@@ -76,7 +76,7 @@ impl<S: StoreProvider + Clone> Runner<S> {
             let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator);
 
             let mut usb_device = build_device(&bus_allocator, &self.options);
-            let service = Rc::new(RefCell::new(Service::from(platform)));
+            let service = Rc::new(RefCell::new(Service::new(platform)));
             let syscall = Syscall::from(service.clone());
             let mut apps = A::new(
                 |id| {
