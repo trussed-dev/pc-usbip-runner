@@ -62,11 +62,12 @@ impl<S: StoreProvider + Clone> Runner<S> {
         self
     }
 
-    pub fn exec<A: Apps<Client<S>, D>, D>(&self, data: D) {
+    pub fn exec<A: Apps<Client<S>, D>, D, F: Fn(&mut Platform<S>) -> D>(&self, make_data: F) {
         virt::with_platform(self.store.clone(), |mut platform| {
             if let Some(init_platform) = &self.init_platform {
                 init_platform(&mut platform);
             }
+            let data = make_data(&mut platform);
 
             // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
             let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
