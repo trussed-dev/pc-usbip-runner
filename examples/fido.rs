@@ -165,7 +165,7 @@ fn main() {
                 store_file(platform, fido_cert, "fido/x5c/00");
             }
         })
-        .exec::<Apps<_>, _>(());
+        .exec::<Apps<_>, _, _>(|_| ());
 }
 
 fn store_file(platform: &impl Platform, host_file: &Path, device_file: &str) {

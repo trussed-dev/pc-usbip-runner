@@ -62,11 +62,12 @@ impl<S: StoreProvider + Clone> Runner<S> {
         self
     }
 
-    pub fn exec<A: Apps<Client<S>, D>, D>(&self, data: D) {
+    pub fn exec<A: Apps<Client<S>, D>, D, F: Fn(&mut Platform<S>) -> D>(&self, make_data: F) {
         virt::with_platform(self.store.clone(), |mut platform| {
             if let Some(init_platform) = &self.init_platform {
                 init_platform(&mut platform);
             }
+            let data = make_data(&mut platform);
 
             // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
             let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
@@ -75,7 +76,7 @@ impl<S: StoreProvider + Clone> Runner<S> {
             let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator);
 
             let mut usb_device = build_device(&bus_allocator, &self.options);
-            let service = Rc::new(RefCell::new(Service::from(platform)));
+            let service = Rc::new(RefCell::new(Service::new(platform)));
             let syscall = Syscall::from(service.clone());
             let mut apps = A::new(
                 |id| {
