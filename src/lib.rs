@@ -1,3 +1,5 @@
+#[cfg(feature = "ccid")]
+mod ccid;
 #[cfg(feature = "ctaphid")]
 mod ctaphid;
 
@@ -37,6 +39,12 @@ pub trait Apps<C: trussed::Client, D> {
         &mut self,
         f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App]) -> T,
     ) -> T;
+
+    #[cfg(feature = "ccid")]
+    fn with_ccid_apps<T>(
+        &mut self,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<7609, 7609>]) -> T,
+    ) -> T;
 }
 
 pub struct Runner<S: StoreProvider> {
@@ -75,6 +83,9 @@ impl<S: StoreProvider + Clone> Runner<S> {
             #[cfg(feature = "ctaphid")]
             let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator);
 
+            #[cfg(feature = "ccid")]
+            let (mut ccid, mut apdu_dispatch) = ccid::setup(&bus_allocator);
+
             let mut usb_device = build_device(&bus_allocator, &self.options);
             let service = Rc::new(RefCell::new(Service::new(platform)));
             let syscall = Syscall::from(service.clone());
@@ -94,10 +105,14 @@ impl<S: StoreProvider + Clone> Runner<S> {
 
                 #[cfg(feature = "ctaphid")]
                 apps.with_ctaphid_apps(|apps| ctaphid_dispatch.poll(apps));
+                #[cfg(feature = "ccid")]
+                apps.with_ccid_apps(|apps| apdu_dispatch.poll(apps));
 
                 usb_device.poll(&mut [
                     #[cfg(feature = "ctaphid")]
                     &mut ctaphid,
+                    #[cfg(feature = "ccid")]
+                    &mut ccid,
                 ]);
             }
         })
