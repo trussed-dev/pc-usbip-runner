@@ -15,6 +15,10 @@ usbip-device = "0.1.5"
 ctaphid-dispatch = { version = "0.1", features = ["log-all"], optional = true }
 usbd-ctaphid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware", features = ["log-all"], optional = true }
 
+# ccid
+usbd-ccid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware", features = ["log-all"], optional = true }
+apdu-dispatch = { version = "0.1.1", optional = true }
+
 [dev-dependencies]
 clap = { version = "3.0.0", features = ["derive"] }
 clap-num = "1.0.0"
@@ -27,8 +31,9 @@ admin-app = { version = "0.1", features = ["log-all"] }
 fido-authenticator = { version = "0.1", features = ["dispatch", "log-all"] }
 
 [features]
-default = ["ctaphid"]
+default = ["ctaphid", "ccid"]
 ctaphid = ["ctaphid-dispatch", "usbd-ctaphid"]
+ccid = ["apdu-dispatch", "usbd-ccid"]
 
 [[example]]
 name = "fido"
