@@ -100,21 +100,24 @@ impl<S: StoreProvider + Clone> Runner<S> {
             );
 
             log::info!("Ready for work");
-            loop {
-                thread::sleep(Duration::from_millis(5));
-
-                #[cfg(feature = "ctaphid")]
-                apps.with_ctaphid_apps(|apps| ctaphid_dispatch.poll(apps));
-                #[cfg(feature = "ccid")]
-                apps.with_ccid_apps(|apps| apdu_dispatch.poll(apps));
-
-                usb_device.poll(&mut [
+            thread::scope(|s| {
+                s.spawn(move || loop {
+                    thread::sleep(Duration::from_millis(5));
+                    usb_device.poll(&mut [
+                        #[cfg(feature = "ctaphid")]
+                        &mut ctaphid,
+                        #[cfg(feature = "ccid")]
+                        &mut ccid,
+                    ]);
+                });
+                loop {
+                    thread::sleep(Duration::from_millis(5));
                     #[cfg(feature = "ctaphid")]
-                    &mut ctaphid,
+                    apps.with_ctaphid_apps(|apps| ctaphid_dispatch.poll(apps));
                     #[cfg(feature = "ccid")]
-                    &mut ccid,
-                ]);
-            }
+                    apps.with_ccid_apps(|apps| apdu_dispatch.poll(apps));
+                }
+            });
         })
     }
 }
