@@ -13,11 +13,11 @@ usbip-device = "0.1.5"
 
 # ctaphid
 ctaphid-dispatch = { version = "0.1", features = ["log-all"], optional = true }
-usbd-ctaphid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware", features = ["log-all"], optional = true }
+usbd-ctaphid = { version = "0.1", features = ["log-all"], optional = true }
 
 # ccid
-usbd-ccid = { git = "https://github.com/Nitrokey/nitrokey-3-firmware", features = ["log-all"], optional = true }
 apdu-dispatch = { version = "0.1.1", optional = true }
+usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid", rev = "84de5d4fe33d18b175c3bb793a28c8a49c5ce6d9", features = ["log-all"], optional = true }
 
 [dev-dependencies]
 clap = { version = "3.0.0", features = ["derive"] }

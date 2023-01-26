@@ -1292,8 +1292,8 @@ checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 
 [[package]]
 name = "usbd-ccid"
-version = "0.0.0-unreleased"
-source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#e3d51b5691d7a2d89e2174a6db9e4da73a85cf8f"
+version = "0.1.0"
+source = "git+https://github.com/trussed-dev/usbd-ccid?rev=84de5d4fe33d18b175c3bb793a28c8a49c5ce6d9#84de5d4fe33d18b175c3bb793a28c8a49c5ce6d9"
 dependencies = [
  "delog",
  "embedded-time",
@@ -1305,8 +1305,9 @@ dependencies = [
 
 [[package]]
 name = "usbd-ctaphid"
-version = "0.0.0-unreleased"
-source = "git+https://github.com/Nitrokey/nitrokey-3-firmware#e3d51b5691d7a2d89e2174a6db9e4da73a85cf8f"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddb69f660f962236eb21565780c433412ad0ba35e5106f53191cdf443c1d03d2"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
