@@ -1,5 +1,8 @@
 use std::path::{Path, PathBuf};
 
+#[cfg(feature = "ccid")]
+use apdu_dispatch::command::SIZE as ApduCommandSize;
+
 use clap::Parser;
 use clap_num::maybe_hex;
 use log::info;
@@ -123,6 +126,7 @@ impl<C: Client + TrussedRequirements> trussed_usbip::Apps<C, ()> for Apps<C> {
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
                 max_msg_size: MESSAGE_SIZE,
+                skip_up_timeout: None,
             },
         );
         let admin = admin_app::App::new(make_client("admin"), [0; 16], 0);
@@ -134,6 +138,14 @@ impl<C: Client + TrussedRequirements> trussed_usbip::Apps<C, ()> for Apps<C> {
         f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App]) -> T,
     ) -> T {
         f(&mut [&mut self.fido, &mut self.admin])
+    }
+
+    #[cfg(feature = "ccid")]
+    fn with_ccid_apps<T>(
+        &mut self,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<ApduCommandSize, ApduCommandSize>]) -> T,
+    ) -> T {
+        f(&mut [])
     }
 }
 
