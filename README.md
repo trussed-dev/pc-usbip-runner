@@ -1,12 +1,13 @@
 # USB/IP Simulation
 
-This runner allows using USB/IP as a means to simulate device connection
+This library allows using USB/IP as a means to simulate device connection
 to the OS, and should allow faster development of the embedded applications.
 
 Remarks:
 - Extensible with CTAP apps: currently FIDO and Admin are active;
-- Does not work with Firefox at the moment;
+- Does not work with Firefox' CTAP1 at the moment;
 - Allows to inject own FIDO certificates, and device properties;
+- Mostly stable CCID support (WIP);
 - Requires multiple `usbip attach` calls to make it work [1].
 
 [1] https://github.com/Sawchord/usbip-device#known-bugs
@@ -15,7 +16,7 @@ Remarks:
 
 USB/IP tools are required to work, as well as kernel supporting it.
 
-On Fedora these could be installed with:
+On Fedora Linux these could be installed with:
 ```
 make setup-fedora
 ```

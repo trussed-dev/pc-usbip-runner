@@ -1,5 +1,7 @@
 EXAMPLE_NAME := fido
 
+.NOTPARALLEL:
+
 all: | start-sim attach finish-message
 
 .PHONY: finish-message
