@@ -48,9 +48,9 @@ dependencies = [
 
 [[package]]
 name = "apdu-dispatch"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17bee13295997ab0b4809e5bf25bfd27844c93cf901220d643f7c0c53f288258"
+checksum = "898c4ae30eeab17a209d5576cf7b312fdbee4d1cb739333c1308908fc841a5fb"
 dependencies = [
  "delog",
  "heapless",
@@ -1292,8 +1292,9 @@ checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 
 [[package]]
 name = "usbd-ccid"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ccid?rev=84de5d4fe33d18b175c3bb793a28c8a49c5ce6d9#84de5d4fe33d18b175c3bb793a28c8a49c5ce6d9"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "855caab212e6d9358cd924b1fc2f7d3d14fe0762bf3ccb052f2b00e2e3954084"
 dependencies = [
  "delog",
  "embedded-time",
