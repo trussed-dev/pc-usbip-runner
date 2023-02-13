@@ -7,7 +7,8 @@ use clap::Parser;
 use clap_num::maybe_hex;
 use log::info;
 use trussed::platform::{consent, reboot, ui};
-use trussed::{virt, Client, Platform};
+use trussed::{backend::Dispatch, virt, Client, Platform};
+use trussed_usbip::ClientBuilder;
 
 use fido_authenticator::TrussedRequirements;
 use usbd_ctaphid::constants::MESSAGE_SIZE;
@@ -119,17 +120,19 @@ struct Apps<C: Client + TrussedRequirements> {
     admin: admin_app::App<C, Reboot>,
 }
 
-impl<C: Client + TrussedRequirements> trussed_usbip::Apps<C, ()> for Apps<C> {
-    fn new(make_client: impl Fn(&str) -> C, _data: ()) -> Self {
+impl<C: Client + TrussedRequirements, D: Dispatch> trussed_usbip::Apps<C, D> for Apps<C> {
+    type Data = ();
+
+    fn new<B: ClientBuilder<C, D>>(builder: &B, _data: ()) -> Self {
         let fido = fido_authenticator::Authenticator::new(
-            make_client("fido"),
+            builder.build("fido", &[]),
             fido_authenticator::Conforming {},
             fido_authenticator::Config {
                 max_msg_size: MESSAGE_SIZE,
                 skip_up_timeout: None,
             },
         );
-        let admin = admin_app::App::new(make_client("admin"), [0; 16], 0);
+        let admin = admin_app::App::new(builder.build("admin", &[]), [0; 16], 0);
         Self { fido, admin }
     }
 
@@ -164,7 +167,7 @@ fn main() {
     };
 
     log::info!("Initializing Trussed");
-    trussed_usbip::Runner::new(store, options)
+    trussed_usbip::Builder::new(store, options)
         .init_platform(move |platform| {
             let ui: Box<dyn trussed::platform::UserInterface + Send + Sync> =
                 Box::new(UserInterface::new());
@@ -177,7 +180,8 @@ fn main() {
                 store_file(platform, fido_cert, "fido/x5c/00");
             }
         })
-        .exec::<Apps<_>, _, _>(|_| ());
+        .build::<Apps<_>>()
+        .exec(|_| ());
 }
 
 fn store_file(platform: &impl Platform, host_file: &Path, device_file: &str) {
