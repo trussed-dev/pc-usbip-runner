@@ -40,4 +40,4 @@ name = "fido"
 required-features = ["ctaphid"]
 
 [patch.crates-io]
-trussed = { git = "https://github.com/trussed-dev/trussed", rev = "84219ec991a7ea942faabe8fd2b862f827367762" }
+trussed = { git = "https://github.com/trussed-dev/trussed", rev = "51477a4c5d22b7fbfe9d5fed137701764b2c86ec" }

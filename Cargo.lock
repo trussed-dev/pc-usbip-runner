@@ -1202,7 +1202,7 @@ checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed?rev=84219ec991a7ea942faabe8fd2b862f827367762#84219ec991a7ea942faabe8fd2b862f827367762"
+source = "git+https://github.com/trussed-dev/trussed?rev=51477a4c5d22b7fbfe9d5fed137701764b2c86ec#51477a4c5d22b7fbfe9d5fed137701764b2c86ec"
 dependencies = [
  "aes",
  "bitflags",

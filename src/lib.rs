@@ -3,11 +3,13 @@ mod ccid;
 #[cfg(feature = "ctaphid")]
 mod ctaphid;
 
-use std::{cell::RefCell, rc::Rc, thread, time::Duration};
+use std::{cell::RefCell, marker::PhantomData, rc::Rc, thread, time::Duration};
 
 use trussed::{
+    backend::{BackendId, CoreOnly, Dispatch},
+    client,
     virt::{self, Platform, StoreProvider},
-    ClientImplementation, Service,
+    ClientImplementation,
 };
 use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
@@ -15,7 +17,9 @@ use usb_device::{
 };
 use usbip_device::UsbIpBus;
 
-pub type Client<S> = ClientImplementation<Syscall<Platform<S>>>;
+pub type Client<S, D = CoreOnly> = ClientImplementation<Service<S, D>, D>;
+
+pub type InitPlatform<S> = Box<dyn Fn(&mut Platform<S>)>;
 
 pub struct Options {
     pub manufacturer: Option<String>,
@@ -31,8 +35,10 @@ impl Options {
     }
 }
 
-pub trait Apps<C: trussed::Client, D> {
-    fn new(make_client: impl Fn(&str) -> C, data: D) -> Self;
+pub trait Apps<C: trussed::Client, D: Dispatch> {
+    type Data;
+
+    fn new<B: ClientBuilder<C, D>>(builder: &B, data: Self::Data) -> Self;
 
     #[cfg(feature = "ctaphid")]
     fn with_ctaphid_apps<T>(
@@ -47,31 +53,25 @@ pub trait Apps<C: trussed::Client, D> {
     ) -> T;
 }
 
-pub struct Runner<S: StoreProvider> {
-    store: S,
-    options: Options,
-    init_platform: Option<Box<dyn Fn(&mut Platform<S>)>>,
+pub trait ClientBuilder<C, D: Dispatch> {
+    fn build(&self, id: &str, backends: &'static [BackendId<D::BackendId>]) -> C;
 }
 
-impl<S: StoreProvider + Clone> Runner<S> {
-    pub fn new(store: S, options: Options) -> Self {
-        Self {
-            store,
-            options,
-            init_platform: Default::default(),
-        }
+pub struct Runner<S: StoreProvider, D, A> {
+    store: S,
+    options: Options,
+    dispatch: D,
+    init_platform: Option<InitPlatform<S>>,
+    _marker: PhantomData<A>,
+}
+
+impl<S: StoreProvider, D: Dispatch, A: Apps<Client<S, D>, D>> Runner<S, D, A> {
+    pub fn builder(store: S, options: Options) -> Builder<S> {
+        Builder::new(store, options)
     }
 
-    pub fn init_platform<F>(&mut self, f: F) -> &mut Self
-    where
-        F: Fn(&mut Platform<S>) + 'static,
-    {
-        self.init_platform = Some(Box::new(f));
-        self
-    }
-
-    pub fn exec<A: Apps<Client<S>, D>, D, F: Fn(&mut Platform<S>) -> D>(&self, make_data: F) {
-        virt::with_platform(self.store.clone(), |mut platform| {
+    pub fn exec<F: Fn(&mut Platform<S>) -> A::Data>(self, make_data: F) {
+        virt::with_platform(self.store, |mut platform| {
             if let Some(init_platform) = &self.init_platform {
                 init_platform(&mut platform);
             }
@@ -87,17 +87,8 @@ impl<S: StoreProvider + Clone> Runner<S> {
             let (mut ccid, mut apdu_dispatch) = ccid::setup(&bus_allocator);
 
             let mut usb_device = build_device(&bus_allocator, &self.options);
-            let service = Rc::new(RefCell::new(Service::new(platform)));
-            let syscall = Syscall::from(service.clone());
-            let mut apps = A::new(
-                |id| {
-                    service
-                        .borrow_mut()
-                        .try_new_client(id, syscall.clone())
-                        .expect("failed to create client")
-                },
-                data,
-            );
+            let service = Service::new(platform, self.dispatch);
+            let mut apps = A::new(&service, data);
 
             log::info!("Ready for work");
             thread::scope(|s| {
@@ -122,6 +113,87 @@ impl<S: StoreProvider + Clone> Runner<S> {
     }
 }
 
+pub struct Builder<S: StoreProvider, D = CoreOnly> {
+    store: S,
+    options: Options,
+    dispatch: D,
+    init_platform: Option<InitPlatform<S>>,
+}
+
+impl<S: StoreProvider> Builder<S> {
+    pub fn new(store: S, options: Options) -> Self {
+        Self {
+            store,
+            options,
+            dispatch: Default::default(),
+            init_platform: Default::default(),
+        }
+    }
+}
+
+impl<S: StoreProvider, D> Builder<S, D> {
+    pub fn dispatch<E>(self, dispatch: E) -> Builder<S, E> {
+        Builder {
+            store: self.store,
+            options: self.options,
+            dispatch,
+            init_platform: self.init_platform,
+        }
+    }
+
+    pub fn init_platform<F>(mut self, f: F) -> Self
+    where
+        F: Fn(&mut Platform<S>) + 'static,
+    {
+        self.init_platform = Some(Box::new(f));
+        self
+    }
+}
+
+impl<S: StoreProvider, D: Dispatch> Builder<S, D> {
+    pub fn build<A: Apps<Client<S, D>, D>>(self) -> Runner<S, D, A> {
+        Runner {
+            store: self.store,
+            options: self.options,
+            dispatch: self.dispatch,
+            init_platform: self.init_platform,
+            _marker: Default::default(),
+        }
+    }
+}
+
+pub struct Service<S: StoreProvider, D: Dispatch>(Rc<RefCell<trussed::Service<Platform<S>, D>>>);
+
+impl<S: StoreProvider, D: Dispatch> Service<S, D> {
+    fn new(platform: Platform<S>, dispatch: D) -> Self {
+        let service = trussed::Service::with_dispatch(platform, dispatch);
+        Self(Rc::new(RefCell::new(service)))
+    }
+}
+
+impl<S: StoreProvider, D: Dispatch> ClientBuilder<Client<S, D>, D> for Service<S, D> {
+    fn build(&self, id: &str, backends: &'static [BackendId<D::BackendId>]) -> Client<S, D> {
+        client::ClientBuilder::new(id)
+            .backends(backends)
+            .prepare(&mut *self.0.borrow_mut())
+            .expect("failed to create client")
+            .build(self.clone())
+    }
+}
+
+impl<S: StoreProvider, D: Dispatch> Clone for Service<S, D> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<S: StoreProvider, D: Dispatch> trussed::client::Syscall for Service<S, D> {
+    fn syscall(&mut self) {
+        log::debug!("syscall");
+        self.0.borrow_mut().process();
+    }
+}
+
 fn build_device<'a, B: UsbBus>(
     bus_allocator: &'a UsbBusAllocator<B>,
     options: &'a Options,
@@ -137,29 +209,4 @@ fn build_device<'a, B: UsbBus>(
         usb_builder = usb_builder.serial_number(serial_number);
     }
     usb_builder.device_class(0x03).device_sub_class(0).build()
-}
-
-pub struct Syscall<P: trussed::Platform> {
-    service: Rc<RefCell<Service<P>>>,
-}
-
-impl<P: trussed::Platform> trussed::client::Syscall for Syscall<P> {
-    fn syscall(&mut self) {
-        log::debug!("syscall");
-        self.service.borrow_mut().process();
-    }
-}
-
-impl<P: trussed::Platform> Clone for Syscall<P> {
-    fn clone(&self) -> Self {
-        Self {
-            service: self.service.clone(),
-        }
-    }
-}
-
-impl<P: trussed::Platform> From<Rc<RefCell<Service<P>>>> for Syscall<P> {
-    fn from(service: Rc<RefCell<Service<P>>>) -> Self {
-        Self { service }
-    }
 }
