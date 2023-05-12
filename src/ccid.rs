@@ -1,16 +1,14 @@
-use apdu_dispatch::{
-    dispatch::ApduDispatch,
-    interchanges::{Contact, Contactless},
-};
-use interchange::Interchange as _;
+use apdu_dispatch::dispatch::ApduDispatch;
 use usb_device::bus::{UsbBus, UsbBusAllocator};
 use usbd_ccid::Ccid;
 
-pub fn setup<B: UsbBus>(
-    bus_allocator: &UsbBusAllocator<B>,
-) -> (Ccid<'_, B, Contact, 3072>, ApduDispatch) {
-    let (ccid_rq, ccid_rp) = Contact::claim().unwrap();
+pub fn setup<'bus, 'pipe, B: UsbBus>(
+    bus_allocator: &'bus UsbBusAllocator<B>,
+    contact: &'pipe apdu_dispatch::interchanges::Channel,
+    contactless: &'pipe apdu_dispatch::interchanges::Channel,
+) -> (Ccid<'bus, 'pipe, B, 3072>, ApduDispatch<'pipe>) {
+    let (ccid_rq, ccid_rp) = contact.split().unwrap();
     let ccid = Ccid::new(bus_allocator, ccid_rq, None);
-    let apdu_dispatch = ApduDispatch::new(ccid_rp, Contactless::claim().unwrap().1);
+    let apdu_dispatch = ApduDispatch::new(ccid_rp, contactless.split().unwrap().1);
     (ccid, apdu_dispatch)
 }
