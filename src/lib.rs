@@ -81,10 +81,14 @@ impl<S: StoreProvider, D: Dispatch, A: Apps<Client<S, D>, D>> Runner<S, D, A> {
             let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
 
             #[cfg(feature = "ctaphid")]
-            let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator);
+            let ctap_channel = ctaphid_dispatch::types::Channel::new();
+            #[cfg(feature = "ctaphid")]
+            let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator, &ctap_channel);
 
             #[cfg(feature = "ccid")]
-            let (mut ccid, mut apdu_dispatch) = ccid::setup(&bus_allocator);
+            let (contact, contactless) = Default::default();
+            #[cfg(feature = "ccid")]
+            let (mut ccid, mut apdu_dispatch) = ccid::setup(&bus_allocator, &contact, &contactless);
 
             let mut usb_device = build_device(&bus_allocator, &self.options);
             let service = Service::new(platform, self.dispatch);
