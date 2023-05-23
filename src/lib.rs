@@ -35,7 +35,7 @@ impl Options {
     }
 }
 
-pub trait Apps<C: trussed::Client, D: Dispatch> {
+pub trait Apps<'interrupt, C: trussed::Client, D: Dispatch> {
     type Data;
 
     fn new<B: ClientBuilder<C, D>>(builder: &B, data: Self::Data) -> Self;
@@ -43,7 +43,7 @@ pub trait Apps<C: trussed::Client, D: Dispatch> {
     #[cfg(feature = "ctaphid")]
     fn with_ctaphid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App]) -> T,
+        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'interrupt>]) -> T,
     ) -> T;
 
     #[cfg(feature = "ccid")]
@@ -65,7 +65,9 @@ pub struct Runner<S: StoreProvider, D, A> {
     _marker: PhantomData<A>,
 }
 
-impl<S: StoreProvider, D: Dispatch, A: Apps<Client<S, D>, D>> Runner<S, D, A> {
+impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, Client<S, D>, D>>
+    Runner<S, D, A>
+{
     pub fn builder(store: S, options: Options) -> Builder<S> {
         Builder::new(store, options)
     }
@@ -155,7 +157,7 @@ impl<S: StoreProvider, D> Builder<S, D> {
 }
 
 impl<S: StoreProvider, D: Dispatch> Builder<S, D> {
-    pub fn build<A: Apps<Client<S, D>, D>>(self) -> Runner<S, D, A> {
+    pub fn build<'interrupt, A: Apps<'interrupt, Client<S, D>, D>>(self) -> Runner<S, D, A> {
         Runner {
             store: self.store,
             options: self.options,
