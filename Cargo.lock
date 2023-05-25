@@ -49,7 +49,7 @@ dependencies = [
 [[package]]
 name = "apdu-dispatch"
 version = "0.1.2"
-source = "git+https://github.com/trussed-dev/apdu-dispatch?rev=6a2720d06930b715a7af9411a12c7fcf35d5995f#6a2720d06930b715a7af9411a12c7fcf35d5995f"
+source = "git+https://github.com/sosthene-nitrokey/apdu-dispatch.git?rev=71ed5f7efadc621f43c5cad47#71ed5f7efadc621f43c5cad4786c9195c205c995"
 dependencies = [
  "delog",
  "heapless",
@@ -687,8 +687,7 @@ dependencies = [
 [[package]]
 name = "iso7816"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7e6ac743d509349b7865595ce90bbfcfbe59f42b8ec0db9e76ec361ace3f652"
+source = "git+https://github.com/sosthene-nitrokey/iso7816.git?rev=eee84fbb58f77d84f23c0fc793dac5ffe232aa5c#eee84fbb58f77d84f23c0fc793dac5ffe232aa5c"
 dependencies = [
  "delog",
  "heapless",
@@ -1446,7 +1445,7 @@ dependencies = [
  "ctaphid-dispatch",
  "delog",
  "fido-authenticator",
- "interchange 0.2.2",
+ "interchange 0.3.0",
  "log",
  "pretty_env_logger",
  "trussed",
