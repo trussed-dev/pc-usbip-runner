@@ -49,7 +49,7 @@ dependencies = [
 [[package]]
 name = "apdu-dispatch"
 version = "0.1.2"
-source = "git+https://github.com/sosthene-nitrokey/apdu-dispatch.git?rev=71ed5f7efadc621f43c5cad47#71ed5f7efadc621f43c5cad4786c9195c205c995"
+source = "git+https://github.com/trussed-dev/apdu-dispatch.git?rev=b72d5eb9f4d7a3f107a78a2f0e41f3c403f4c7a4#b72d5eb9f4d7a3f107a78a2f0e41f3c403f4c7a4"
 dependencies = [
  "delog",
  "heapless",
@@ -346,7 +346,7 @@ dependencies = [
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.1.1"
-source = "git+https://github.com/sosthene-nitrokey/ctaphid-dispatch?rev=461a5d6519e844758de97f929481f9f03d8d2869#461a5d6519e844758de97f929481f9f03d8d2869"
+source = "git+https://github.com/trussed-dev/ctaphid-dispatch?rev=d9eb980da163b613fdf759f6092b7c3bdcc0a22c#d9eb980da163b613fdf759f6092b7c3bdcc0a22c"
 dependencies = [
  "delog",
  "heapless",
@@ -687,7 +687,8 @@ dependencies = [
 [[package]]
 name = "iso7816"
 version = "0.1.1"
-source = "git+https://github.com/sosthene-nitrokey/iso7816.git?rev=eee84fbb58f77d84f23c0fc793dac5ffe232aa5c#eee84fbb58f77d84f23c0fc793dac5ffe232aa5c"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7e6ac743d509349b7865595ce90bbfcfbe59f42b8ec0db9e76ec361ace3f652"
 dependencies = [
  "delog",
  "heapless",
@@ -1492,7 +1493,7 @@ checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 [[package]]
 name = "usbd-ccid"
 version = "0.2.0"
-source = "git+https://github.com/sosthene-nitrokey/usbd-ccid?rev=7e1f11bd125651382d4b403226327de5df5f86b6#7e1f11bd125651382d4b403226327de5df5f86b6"
+source = "git+https://github.com/trussed-dev/usbd-ccid?rev=eeea54f85cfa69a43c676b63c030608830ea35ea#eeea54f85cfa69a43c676b63c030608830ea35ea"
 dependencies = [
  "delog",
  "embedded-time",
@@ -1505,7 +1506,7 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ctaphid?rev=9dd79aeeb927ab7fdb882fdca8f9324f64d1292c#9dd79aeeb927ab7fdb882fdca8f9324f64d1292c"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid?rev=2f658fbe84e262037621b15cb867424c4a60b038#2f658fbe84e262037621b15cb867424c4a60b038"
 dependencies = [
  "ctap-types",
  "ctaphid-dispatch",
