@@ -42,9 +42,8 @@ required-features = ["ctaphid"]
 [patch.crates-io]
 trussed = { git = "https://github.com/trussed-dev/trussed", rev = "51477a4c5d22b7fbfe9d5fed137701764b2c86ec" }
 
-usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid", rev = "9dd79aeeb927ab7fdb882fdca8f9324f64d1292c" }
-usbd-ccid = { git = "https://github.com/sosthene-nitrokey/usbd-ccid", rev = "7e1f11bd125651382d4b403226327de5df5f86b6" }
-ctaphid-dispatch = { git = "https://github.com/sosthene-nitrokey/ctaphid-dispatch", rev = "461a5d6519e844758de97f929481f9f03d8d2869" }
-apdu-dispatch = { git = "https://github.com/sosthene-nitrokey/apdu-dispatch.git", rev = "71ed5f7efadc621f43c5cad47" }
-iso7816 = { git = "https://github.com/sosthene-nitrokey/iso7816.git", rev = "eee84fbb58f77d84f23c0fc793dac5ffe232aa5c" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid", rev = "2f658fbe84e262037621b15cb867424c4a60b038" }
+usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid", rev = "eeea54f85cfa69a43c676b63c030608830ea35ea" }
+ctaphid-dispatch = { git = "https://github.com/trussed-dev/ctaphid-dispatch", rev = "d9eb980da163b613fdf759f6092b7c3bdcc0a22c" }
+apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "b72d5eb9f4d7a3f107a78a2f0e41f3c403f4c7a4" }
 
