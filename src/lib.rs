@@ -3,7 +3,14 @@ mod ccid;
 #[cfg(feature = "ctaphid")]
 mod ctaphid;
 
-use std::{cell::RefCell, marker::PhantomData, rc::Rc, thread, time::Duration};
+use std::{
+    cell::RefCell,
+    marker::PhantomData,
+    rc::Rc,
+    sync::atomic::{AtomicBool, Ordering},
+    thread,
+    time::Duration,
+};
 
 use trussed::{
     backend::{BackendId, CoreOnly, Dispatch},
@@ -16,6 +23,12 @@ use usb_device::{
     device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
 };
 use usbip_device::UsbIpBus;
+
+static IS_WAITING: AtomicBool = AtomicBool::new(false);
+
+pub fn set_waiting(waiting: bool) {
+    IS_WAITING.store(waiting, Ordering::Relaxed)
+}
 
 pub type Client<S, D = CoreOnly> = ClientImplementation<Service<S, D>, D>;
 
@@ -106,6 +119,10 @@ impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, Client<S, D>
                         #[cfg(feature = "ccid")]
                         &mut ccid,
                     ]);
+                    #[cfg(feature = "ctaphid")]
+                    ctaphid.send_keepalive(IS_WAITING.load(Ordering::Relaxed));
+                    #[cfg(feature = "ccid")]
+                    ccid.send_wait_extension();
                 });
                 loop {
                     thread::sleep(Duration::from_millis(5));
