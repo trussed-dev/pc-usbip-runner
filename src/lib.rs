@@ -9,7 +9,7 @@ use std::{
     rc::Rc,
     sync::atomic::{AtomicBool, Ordering},
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use trussed::{
@@ -111,19 +111,29 @@ impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, Client<S, D>
 
             log::info!("Ready for work");
             thread::scope(|s| {
-                s.spawn(move || loop {
-                    thread::sleep(Duration::from_millis(5));
-                    usb_device.poll(&mut [
-                        #[cfg(feature = "ctaphid")]
-                        &mut ctaphid,
-                        #[cfg(feature = "ccid")]
-                        &mut ccid,
-                    ]);
+                s.spawn(move || {
+                    let _epoch = Instant::now();
                     #[cfg(feature = "ctaphid")]
-                    ctaphid.send_keepalive(IS_WAITING.load(Ordering::Relaxed));
+                    let mut timeout_ctaphid = Timeout::new();
                     #[cfg(feature = "ccid")]
-                    ccid.send_wait_extension();
+                    let mut timeout_ccid = Timeout::new();
+
+                    loop {
+                        thread::sleep(Duration::from_millis(5));
+                        usb_device.poll(&mut [
+                            #[cfg(feature = "ctaphid")]
+                            &mut ctaphid,
+                            #[cfg(feature = "ccid")]
+                            &mut ccid,
+                        ]);
+
+                        #[cfg(feature = "ctaphid")]
+                        ctaphid::keepalive(&mut ctaphid, &mut timeout_ctaphid, _epoch);
+                        #[cfg(feature = "ccid")]
+                        ccid::keepalive(&mut ccid, &mut timeout_ccid, _epoch);
+                    }
                 });
+
                 loop {
                     thread::sleep(Duration::from_millis(5));
                     #[cfg(feature = "ctaphid")]
@@ -232,4 +242,28 @@ fn build_device<'a, B: UsbBus>(
         usb_builder = usb_builder.serial_number(serial_number);
     }
     usb_builder.device_class(0x03).device_sub_class(0).build()
+}
+
+#[derive(Default)]
+pub struct Timeout(Option<Duration>);
+
+impl Timeout {
+    fn new() -> Self {
+        Self::default()
+    }
+
+    fn update<F: FnOnce() -> Option<Duration>>(
+        &mut self,
+        epoch: Instant,
+        keepalive: Option<Duration>,
+        f: F,
+    ) {
+        if let Some(timeout) = self.0 {
+            if epoch.elapsed() >= timeout {
+                self.0 = f().map(|duration| epoch.elapsed() + duration);
+            }
+        } else if let Some(duration) = keepalive {
+            self.0 = Some(epoch.elapsed() + duration);
+        }
+    }
 }
