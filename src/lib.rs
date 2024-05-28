@@ -4,10 +4,11 @@ mod ccid;
 mod ctaphid;
 
 use std::{
-    cell::RefCell,
     marker::PhantomData,
-    rc::Rc,
-    sync::atomic::{AtomicBool, Ordering},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, Receiver, Sender},
+    },
     thread,
     time::{Duration, Instant},
 };
@@ -15,6 +16,7 @@ use std::{
 use trussed::{
     backend::{BackendId, CoreOnly, Dispatch},
     client,
+    service::Service,
     virt::{self, Platform, StoreProvider},
     ClientImplementation,
 };
@@ -30,7 +32,7 @@ pub fn set_waiting(waiting: bool) {
     IS_WAITING.store(waiting, Ordering::Relaxed)
 }
 
-pub type Client<S, D = CoreOnly> = ClientImplementation<Service<S, D>, D>;
+pub type Client<D = CoreOnly> = ClientImplementation<Syscall, D>;
 
 pub type InitPlatform<S> = Box<dyn Fn(&mut Platform<S>)>;
 
@@ -51,7 +53,7 @@ impl Options {
 pub trait Apps<'interrupt, C: trussed::Client, D: Dispatch> {
     type Data;
 
-    fn new<B: ClientBuilder<C, D>>(builder: &B, data: Self::Data) -> Self;
+    fn new<B: ClientBuilder<C, D>>(builder: &mut B, data: Self::Data) -> Self;
 
     #[cfg(feature = "ctaphid")]
     fn with_ctaphid_apps<T>(
@@ -67,7 +69,7 @@ pub trait Apps<'interrupt, C: trussed::Client, D: Dispatch> {
 }
 
 pub trait ClientBuilder<C, D: Dispatch> {
-    fn build(&self, id: &str, backends: &'static [BackendId<D::BackendId>]) -> C;
+    fn build(&mut self, id: &str, backends: &'static [BackendId<D::BackendId>]) -> C;
 }
 
 pub struct Runner<S: StoreProvider, D, A> {
@@ -78,9 +80,7 @@ pub struct Runner<S: StoreProvider, D, A> {
     _marker: PhantomData<A>,
 }
 
-impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, Client<S, D>, D>>
-    Runner<S, D, A>
-{
+impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, Client<D>, D>> Runner<S, D, A> {
     pub fn builder(store: S, options: Options) -> Builder<S> {
         Builder::new(store, options)
     }
@@ -106,11 +106,12 @@ impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, Client<S, D>
             let (mut ccid, mut apdu_dispatch) = ccid::setup(&bus_allocator, &contact, &contactless);
 
             let mut usb_device = build_device(&bus_allocator, &self.options);
-            let service = Service::new(platform, self.dispatch);
-            let mut apps = A::new(&service, data);
+            let mut trussed = Trussed::new(platform, self.dispatch);
+            let mut apps = A::new(&mut trussed, data);
 
             log::info!("Ready for work");
             thread::scope(|s| {
+                // usb poll + keepalive task
                 s.spawn(move || {
                     let _epoch = Instant::now();
                     #[cfg(feature = "ctaphid")]
@@ -134,6 +135,10 @@ impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, Client<S, D>
                     }
                 });
 
+                // trussed task
+                s.spawn(move || trussed.process());
+
+                // apps task
                 loop {
                     thread::sleep(Duration::from_millis(5));
                     #[cfg(feature = "ctaphid")]
@@ -184,7 +189,7 @@ impl<S: StoreProvider, D> Builder<S, D> {
 }
 
 impl<S: StoreProvider, D: Dispatch> Builder<S, D> {
-    pub fn build<'interrupt, A: Apps<'interrupt, Client<S, D>, D>>(self) -> Runner<S, D, A> {
+    pub fn build<'interrupt, A: Apps<'interrupt, Client<D>, D>>(self) -> Runner<S, D, A> {
         Runner {
             store: self.store,
             options: self.options,
@@ -195,35 +200,48 @@ impl<S: StoreProvider, D: Dispatch> Builder<S, D> {
     }
 }
 
-pub struct Service<S: StoreProvider, D: Dispatch>(Rc<RefCell<trussed::Service<Platform<S>, D>>>);
+struct Trussed<S: StoreProvider, D: Dispatch> {
+    service: Service<Platform<S>, D>,
+    syscall: Syscall,
+    receiver: Receiver<()>,
+}
 
-impl<S: StoreProvider, D: Dispatch> Service<S, D> {
+impl<S: StoreProvider, D: Dispatch> Trussed<S, D> {
     fn new(platform: Platform<S>, dispatch: D) -> Self {
-        let service = trussed::Service::with_dispatch(platform, dispatch);
-        Self(Rc::new(RefCell::new(service)))
+        let service = Service::with_dispatch(platform, dispatch);
+        let (sender, receiver) = mpsc::channel();
+        let syscall = Syscall(sender);
+        Self {
+            service,
+            syscall,
+            receiver,
+        }
+    }
+
+    fn process(&mut self) {
+        for _ in self.receiver.iter() {
+            self.service.process()
+        }
     }
 }
 
-impl<S: StoreProvider, D: Dispatch> ClientBuilder<Client<S, D>, D> for Service<S, D> {
-    fn build(&self, id: &str, backends: &'static [BackendId<D::BackendId>]) -> Client<S, D> {
+impl<S: StoreProvider, D: Dispatch> ClientBuilder<Client<D>, D> for Trussed<S, D> {
+    fn build(&mut self, id: &str, backends: &'static [BackendId<D::BackendId>]) -> Client<D> {
         client::ClientBuilder::new(id)
             .backends(backends)
-            .prepare(&mut *self.0.borrow_mut())
+            .prepare(&mut self.service)
             .expect("failed to create client")
-            .build(self.clone())
+            .build(self.syscall.clone())
     }
 }
 
-impl<S: StoreProvider, D: Dispatch> Clone for Service<S, D> {
-    fn clone(&self) -> Self {
-        Self(self.0.clone())
-    }
-}
+#[derive(Clone)]
+pub struct Syscall(Sender<()>);
 
-impl<S: StoreProvider, D: Dispatch> trussed::client::Syscall for Service<S, D> {
+impl trussed::client::Syscall for Syscall {
     fn syscall(&mut self) {
         log::debug!("syscall");
-        self.0.borrow_mut().process();
+        self.0.send(()).ok();
     }
 }
 
