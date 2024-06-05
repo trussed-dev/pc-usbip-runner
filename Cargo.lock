@@ -1588,8 +1588,8 @@ checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 
 [[package]]
 name = "usbd-ccid"
-version = "0.2.0"
-source = "git+https://github.com/trussed-dev/usbd-ccid?rev=eeea54f85cfa69a43c676b63c030608830ea35ea#eeea54f85cfa69a43c676b63c030608830ea35ea"
+version = "0.3.0"
+source = "git+https://github.com/trussed-dev/usbd-ccid?tag=0.3.0#0a31e9cf7c5aa8498c65982c95b9faeebe8e3f52"
 dependencies = [
  "delog",
  "embedded-time",

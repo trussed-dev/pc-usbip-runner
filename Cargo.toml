@@ -17,7 +17,7 @@ usbd-ctaphid = { version = "0.1", features = ["log-all"], optional = true }
 
 # ccid
 apdu-dispatch = { version = "0.1.2", optional = true }
-usbd-ccid = { version = "0.2", features = ["log-all"], optional = true }
+usbd-ccid = { version = "0.3", features = ["log-all"], optional = true }
 
 [dev-dependencies]
 clap = { version = "3.0.0", features = ["derive"] }
@@ -43,7 +43,7 @@ required-features = ["ctaphid"]
 trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "51e68500d7601d04f884f5e95567d14b9018a6cb" }
 
 usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid", rev = "e9cbf904f548979685c4c06d75479b75e3695160" }
-usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid", rev = "eeea54f85cfa69a43c676b63c030608830ea35ea" }
+usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid", tag = "0.3.0" }
 ctaphid-dispatch = { git = "https://github.com/trussed-dev/ctaphid-dispatch", rev = "57cb3317878a8593847595319aa03ef17c29ec5b" }
 apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "b72d5eb9f4d7a3f107a78a2f0e41f3c403f4c7a4" }
 
