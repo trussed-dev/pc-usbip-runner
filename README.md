@@ -1,15 +1,22 @@
-# USB/IP Simulation
+# trussed-usbip
 
-This runner allows using USB/IP as a means to simulate device connection
-to the OS, and should allow faster development of the embedded applications.
+This crate facilitates simulation of Trussed devices using USB/IP.
+It should only be used for development and testing.
 
 Remarks:
-- Extensible with CTAP apps: currently FIDO and Admin are active;
-- Does not work with Firefox at the moment;
-- Allows to inject own FIDO certificates, and device properties;
 - Requires multiple `usbip attach` calls to make it work [1].
+- Works best with CTAPHID.  CCID is supported but often unstable.
 
 [1] https://github.com/Sawchord/usbip-device#known-bugs
+
+## Examples
+
+[`examples/dummy.rs`](`examples/dummy.rs`) contains a very simple example that
+shows how to run a simulated Trussed device.
+For a more complex example, see the [usbip runner][] of the Nitrokey 3 that
+provides all features of the Nitrokey 3.
+
+[usbip runner]: https://github.com/Nitrokey/nitrokey-3-firmware/tree/main/runners/usbip
 
 ## Setup
 

@@ -1,4 +1,4 @@
-EXAMPLE_NAME := fido
+EXAMPLE_NAME := dummy
 
 all: | start-sim attach finish-message
 

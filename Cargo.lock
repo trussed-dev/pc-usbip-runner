@@ -3,19 +3,6 @@
 version = 3
 
 [[package]]
-name = "admin-app"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67d9f4831720ac3f95d708922b71cbec0d085548affb935f4af35395af28366c"
-dependencies = [
- "apdu-dispatch",
- "ctaphid-dispatch",
- "delog",
- "iso7816",
- "trussed",
-]
-
-[[package]]
 name = "aead"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -522,26 +509,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fido-authenticator"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bda469ecf5b58ba898e1a6e68f99529b568e24490f45ced8222240d10d7c6508"
-dependencies = [
- "apdu-dispatch",
- "ctap-types",
- "ctaphid-dispatch",
- "delog",
- "heapless",
- "interchange 0.2.2",
- "iso7816",
- "littlefs2 0.3.2",
- "serde",
- "serde-indexed",
- "serde_cbor",
- "trussed",
-]
-
-[[package]]
 name = "flexiber"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -771,22 +738,6 @@ checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
 dependencies = [
  "cfg-if",
  "winapi",
-]
-
-[[package]]
-name = "littlefs2"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0dc089501e32d62b3e4d809a29b9e00d6211a197440602d69f304f1e4e82136b"
-dependencies = [
- "bitflags",
- "cstr_core",
- "cty",
- "delog",
- "generic-array",
- "heapless",
- "littlefs2-sys",
- "serde",
 ]
 
 [[package]]
@@ -1517,7 +1468,7 @@ dependencies = [
  "hex-literal",
  "hmac 0.12.1",
  "interchange 0.3.0",
- "littlefs2 0.4.0",
+ "littlefs2",
  "nb 1.1.0",
  "p256-cortex-m4",
  "postcard",
@@ -1535,13 +1486,11 @@ dependencies = [
 name = "trussed-usbip"
 version = "0.0.1"
 dependencies = [
- "admin-app",
  "apdu-dispatch",
  "clap",
  "clap-num",
  "ctaphid-dispatch",
  "delog",
- "fido-authenticator",
  "interchange 0.3.0",
  "log",
  "pretty_env_logger",
