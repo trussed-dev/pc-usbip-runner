@@ -34,10 +34,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "apdu-dispatch"
-version = "0.1.2"
-source = "git+https://github.com/trussed-dev/apdu-dispatch.git?rev=b72d5eb9f4d7a3f107a78a2f0e41f3c403f4c7a4#b72d5eb9f4d7a3f107a78a2f0e41f3c403f4c7a4"
+name = "apdu-app"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce391931a2cc4597eaf0d464db9d4d5e1939ccc8dd6eda0f86cda117e914c02d"
 dependencies = [
+ "iso7816",
+]
+
+[[package]]
+name = "apdu-dispatch"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4063bce5a221fcef21017ead889f26468dbee476649d6a2181b0931197082904"
+dependencies = [
+ "apdu-app",
  "delog",
  "heapless",
  "interchange 0.3.0",
@@ -704,9 +715,9 @@ dependencies = [
 
 [[package]]
 name = "iso7816"
-version = "0.1.1"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7e6ac743d509349b7865595ce90bbfcfbe59f42b8ec0db9e76ec361ace3f652"
+checksum = "c75f5d3f2d959c5d37b382ed9b5a32d0a0e6112ab6ac9eb8fce82359db6f2367"
 dependencies = [
  "delog",
  "heapless",

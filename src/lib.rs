@@ -63,7 +63,7 @@ pub trait Apps<'interrupt, S: StoreProvider, D: Dispatch> {
     #[cfg(feature = "ccid")]
     fn with_ccid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<7609, 7609>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<7609>]) -> T,
     ) -> T;
 }
 

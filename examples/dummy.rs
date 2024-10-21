@@ -112,7 +112,7 @@ impl<'a, S: StoreProvider> trussed_usbip::Apps<'a, S, CoreOnly>
     #[cfg(feature = "ccid")]
     fn with_ccid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<ApduCommandSize, ApduCommandSize>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<ApduCommandSize>]) -> T,
     ) -> T {
         f(&mut [])
     }
