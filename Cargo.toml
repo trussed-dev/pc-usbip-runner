@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 interchange = "0.3.0"
 log = { version = "0.4.14", default-features = false }
-trussed = { version = "0.1", features = ["log-all", "virt"] }
+trussed = { version = "0.1", default-features = false, features = ["log-all", "virt"] }
 usb-device = { version = "0.2.7", default-features = false }
 usbip-device = "0.1.5"
 
@@ -23,6 +23,8 @@ usbd-ccid = { version = "0.3", features = ["log-all"], optional = true }
 clap = { version = "3.0.0", features = ["derive"] }
 clap-num = "1.0.0"
 delog = { version = "0.1.6", features = ["std-log"] }
+heapless-bytes = "0.3"
+littlefs2-core = "0.1"
 pretty_env_logger = "0.4.0"
 trussed = { version = "0.1", features = ["clients-1"] }
 
@@ -32,8 +34,7 @@ ctaphid = ["ctaphid-dispatch", "usbd-ctaphid"]
 ccid = ["apdu-dispatch", "usbd-ccid"]
 
 [patch.crates-io]
-trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "51e68500d7601d04f884f5e95567d14b9018a6cb" }
-
-usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid", rev = "e9cbf904f548979685c4c06d75479b75e3695160" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "6bba8fde36d05c0227769eb63345744e87d84b2b" }
+usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "96bf04e97cfc8077b4d9b6b97b3e34ec3ca3e2fc" }
 usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid", tag = "0.3.0" }
-ctaphid-dispatch = { git = "https://github.com/trussed-dev/ctaphid-dispatch", rev = "57cb3317878a8593847595319aa03ef17c29ec5b" }
+ctaphid-dispatch = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev = "5a2864c76fea6785d9ffe4c7b6596237d8378755" }

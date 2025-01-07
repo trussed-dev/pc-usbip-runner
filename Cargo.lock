@@ -51,7 +51,7 @@ dependencies = [
  "apdu-app",
  "delog",
  "heapless",
- "interchange 0.3.0",
+ "interchange",
  "iso7816",
 ]
 
@@ -83,21 +83,22 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "bindgen"
-version = "0.56.0"
+version = "0.69.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2da379dbebc0b76ef63ca68d8fc6e71c0f13e59432e0987e508c1820e6ab5239"
+checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
 dependencies = [
- "bitflags",
+ "bitflags 2.6.0",
  "cexpr",
  "clang-sys",
+ "itertools",
  "lazy_static",
  "lazycell",
- "peeking_take_while",
  "proc-macro2",
  "quote",
  "regex",
  "rustc-hash",
  "shlex",
+ "syn 2.0.18",
 ]
 
 [[package]]
@@ -105,6 +106,12 @@ name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+
+[[package]]
+name = "bitflags"
+version = "2.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
 name = "block-buffer"
@@ -150,9 +157,9 @@ dependencies = [
 
 [[package]]
 name = "cbor-smol"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d516e3e353d5fc5ee156028f43224033430fd08ef05f8d5dba18a57a4ee5df49"
+checksum = "1e087b31faa4ad4ba21c9bd0209204eef424dae6424195aafc7242006b69fc8d"
 dependencies = [
  "delog",
  "heapless",
@@ -168,9 +175,9 @@ checksum = "50d30906286121d95be3d479533b458f87493b30a4b5f79a607db8f5d11aa91f"
 
 [[package]]
 name = "cexpr"
-version = "0.4.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4aedb84272dbe89af497cf81375129abda4fc0a9e7c5d317498c15cc30c0d27"
+checksum = "6fac387a98bb7c37292057cffc56d62ecb629900026402633ae9160df93a8766"
 dependencies = [
  "nom",
 ]
@@ -234,7 +241,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ea181bf566f71cb9a5d17a59e1871af638180a18fb0035c92ae62b705207123"
 dependencies = [
  "atty",
- "bitflags",
+ "bitflags 1.3.2",
  "clap_derive",
  "clap_lex",
  "indexmap",
@@ -334,45 +341,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "cstr_core"
-version = "0.2.6"
+name = "ctaphid-app"
+version = "0.1.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd98742e4fdca832d40cab219dc2e3048de17d873248f83f17df47c1bea70956"
+checksum = "d1179116598f4f53694ce2fda6bb38183f71efcb9ff6385d08ca1d79d6254841"
 dependencies = [
- "cty",
- "memchr",
-]
-
-[[package]]
-name = "ctap-types"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e4fa005ff525537460e1fd70a1ff4f417ae4a6ed14887f3e4720221e20f7562"
-dependencies = [
- "bitflags",
- "cbor-smol",
- "cosey",
- "delog",
- "heapless",
  "heapless-bytes",
- "interchange 0.2.2",
- "iso7816",
- "serde",
- "serde-indexed",
- "serde_repr",
+ "trussed-core",
 ]
 
 [[package]]
 name = "ctaphid-dispatch"
 version = "0.1.1"
-source = "git+https://github.com/trussed-dev/ctaphid-dispatch?rev=57cb3317878a8593847595319aa03ef17c29ec5b#57cb3317878a8593847595319aa03ef17c29ec5b"
+source = "git+https://github.com/trussed-dev/ctaphid-dispatch.git?rev=5a2864c76fea6785d9ffe4c7b6596237d8378755#5a2864c76fea6785d9ffe4c7b6596237d8378755"
 dependencies = [
+ "ctaphid-app",
  "delog",
- "heapless",
  "heapless-bytes",
- "interchange 0.3.0",
+ "interchange",
  "ref-swap",
- "trussed",
+ "trussed-core",
 ]
 
 [[package]]
@@ -450,17 +438,23 @@ dependencies = [
  "der",
  "elliptic-curve",
  "hmac 0.11.0",
- "signature",
+ "signature 1.3.2",
 ]
 
 [[package]]
 name = "ed25519"
-version = "1.5.3"
+version = "2.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91cff35c70bba8a626e3185d8cd48cc11b5437e1a5bcd15b9b5fa3c64b6dfee7"
+checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
 dependencies = [
- "signature",
+ "signature 2.2.0",
 ]
+
+[[package]]
+name = "either"
+version = "1.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 
 [[package]]
 name = "elliptic-curve"
@@ -583,12 +577,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "half"
-version = "1.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eabb4a44450da02c90444cf74558da904edde8fb4e9035a9a6a4e15445af0bd7"
-
-[[package]]
 name = "hash32"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -625,7 +613,6 @@ checksum = "7285eba272c6af3e9f15fb9e1c1b6e7d35aa70580ffe0d47af017e97dfb6f48b"
 dependencies = [
  "heapless",
  "serde",
- "serde_cbor",
  "typenum",
 ]
 
@@ -700,12 +687,6 @@ dependencies = [
 
 [[package]]
 name = "interchange"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "310d743c23f798f10d5ba2f77fdd3eff06aaf2d8f8b9d78beba7fb1167f4ccbf"
-
-[[package]]
-name = "interchange"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92cfaa4be499da454ab279e04dee4837e71b3803eced4bd2b4cdec4bb3377b4f"
@@ -721,6 +702,15 @@ checksum = "c75f5d3f2d959c5d37b382ed9b5a32d0a0e6112ab6ac9eb8fce82359db6f2367"
 dependencies = [
  "delog",
  "heapless",
+]
+
+[[package]]
+name = "itertools"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+dependencies = [
+ "either",
 ]
 
 [[package]]
@@ -753,29 +743,36 @@ dependencies = [
 
 [[package]]
 name = "littlefs2"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95c72bdf63e7ad35f391e60c48e4c32560038f1d3a0dd97f90a2891ce09160bf"
+checksum = "6857dedc8aba748ea287177abe2bdfb3bb43464c3003f93cdc0a72e1e542b60f"
 dependencies = [
- "bitflags",
- "cstr_core",
- "cty",
  "delog",
  "generic-array",
  "heapless",
+ "littlefs2-core",
  "littlefs2-sys",
+]
+
+[[package]]
+name = "littlefs2-core"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "250ec1e3017a4540932dc8b33daca325cb6195cded097e1addd9111d9ea2c48f"
+dependencies = [
+ "bitflags 2.6.0",
+ "heapless-bytes",
  "serde",
 ]
 
 [[package]]
 name = "littlefs2-sys"
-version = "0.1.7"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c25e4f545f6ca5415c6325066260e764674d7893dcf0017a52a2ef456ba915f5"
+checksum = "5e9a93267fadc37e91758279342f2055b6c03b1187ec7a6b1419c3710172466e"
 dependencies = [
  "bindgen",
  "cc",
- "cty",
 ]
 
 [[package]]
@@ -823,6 +820,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
+name = "minimal-lexical"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
 name = "nb"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -839,12 +842,12 @@ checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
 
 [[package]]
 name = "nom"
-version = "5.1.3"
+version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08959a387a676302eebf4ddbcbc611da04285579f76f88ee0506c63b1a61dd4b"
+checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
 dependencies = [
  "memchr",
- "version_check",
+ "minimal-lexical",
 ]
 
 [[package]]
@@ -980,12 +983,6 @@ dependencies = [
  "cc",
  "cty",
 ]
-
-[[package]]
-name = "peeking_take_while"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
 
 [[package]]
 name = "pin-project-lite"
@@ -1162,9 +1159,9 @@ checksum = "4f3208ce4d8448b3f3e7d168a73f5e0c43a61e32930de3bceeccedb388b6bf06"
 
 [[package]]
 name = "salty"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77cdd38ed8bfe51e53ee991aae0791b94349d0a05cfdecd283835a8a965d4c37"
+checksum = "b947325a585e90733e0e9ec097228f40b637cc346f9bd68f84d5c6297d0fcfef"
 dependencies = [
  "cosey",
  "ed25519",
@@ -1208,16 +1205,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "serde_cbor"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bef2ebfde456fb76bbcf9f59315333decc4fda0b2b44b420243c11e0f5ec1f5"
-dependencies = [
- "half",
- "serde",
 ]
 
 [[package]]
@@ -1288,9 +1275,9 @@ dependencies = [
 
 [[package]]
 name = "shlex"
-version = "0.1.1"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fdf1b9db47230893d76faad238fd6097fd6d6a9245cd7a4d90dbd639536bbd2"
+checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "signature"
@@ -1301,6 +1288,12 @@ dependencies = [
  "digest 0.9.0",
  "rand_core",
 ]
+
+[[package]]
+name = "signature"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
 
 [[package]]
 name = "smallvec"
@@ -1459,10 +1452,10 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/trussed.git?rev=51e68500d7601d04f884f5e95567d14b9018a6cb#51e68500d7601d04f884f5e95567d14b9018a6cb"
+source = "git+https://github.com/trussed-dev/trussed.git?rev=6bba8fde36d05c0227769eb63345744e87d84b2b#6bba8fde36d05c0227769eb63345744e87d84b2b"
 dependencies = [
  "aes",
- "bitflags",
+ "bitflags 2.6.0",
  "cbc",
  "cbor-smol",
  "cfg-if",
@@ -1478,8 +1471,9 @@ dependencies = [
  "heapless-bytes",
  "hex-literal",
  "hmac 0.12.1",
- "interchange 0.3.0",
+ "interchange",
  "littlefs2",
+ "littlefs2-core",
  "nb 1.1.0",
  "p256-cortex-m4",
  "postcard",
@@ -1487,10 +1481,24 @@ dependencies = [
  "rand_core",
  "salty",
  "serde",
- "serde-indexed",
  "sha-1",
  "sha2 0.10.7",
+ "trussed-core",
  "zeroize",
+]
+
+[[package]]
+name = "trussed-core"
+version = "0.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc8831dee63f373a6bb031caac114c6672d593d03e371fd95b41a47be7d415e0"
+dependencies = [
+ "heapless-bytes",
+ "littlefs2-core",
+ "postcard",
+ "rand_core",
+ "serde",
+ "serde-indexed",
 ]
 
 [[package]]
@@ -1502,7 +1510,9 @@ dependencies = [
  "clap-num",
  "ctaphid-dispatch",
  "delog",
- "interchange 0.3.0",
+ "heapless-bytes",
+ "interchange",
+ "littlefs2-core",
  "log",
  "pretty_env_logger",
  "trussed",
@@ -1554,7 +1564,7 @@ dependencies = [
  "delog",
  "embedded-time",
  "heapless",
- "interchange 0.3.0",
+ "interchange",
  "iso7816",
  "usb-device",
 ]
@@ -1562,18 +1572,16 @@ dependencies = [
 [[package]]
 name = "usbd-ctaphid"
 version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ctaphid?rev=e9cbf904f548979685c4c06d75479b75e3695160#e9cbf904f548979685c4c06d75479b75e3695160"
+source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?rev=96bf04e97cfc8077b4d9b6b97b3e34ec3ca3e2fc#96bf04e97cfc8077b4d9b6b97b3e34ec3ca3e2fc"
 dependencies = [
- "ctap-types",
  "ctaphid-dispatch",
  "delog",
  "embedded-time",
- "heapless",
  "heapless-bytes",
- "interchange 0.3.0",
+ "interchange",
  "ref-swap",
  "serde",
- "trussed",
+ "trussed-core",
  "usb-device",
 ]
 
@@ -1583,7 +1591,7 @@ version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e7a0b57d68d666cc85d8bfe8a32fb4196e8eb89b611658a0624af6428e7a2fd"
 dependencies = [
- "bitflags",
+ "bitflags 1.3.2",
  "log",
  "usb-device",
 ]

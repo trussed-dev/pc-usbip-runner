@@ -14,11 +14,12 @@ use apdu_dispatch::command::SIZE as ApduCommandSize;
 #[cfg(feature = "ctaphid")]
 use ctaphid_dispatch::{
     command::{Command, VendorCommand},
-    types::{AppResult, Error, Message},
+    types::{AppResult, Error},
 };
 
 use clap::Parser;
 use clap_num::maybe_hex;
+use littlefs2_core::path;
 use trussed::{
     backend::CoreOnly,
     client::{Client, ClientBuilder},
@@ -69,12 +70,17 @@ impl<C: Client> DummyApp<C> {
 const CTAPHID_COMMAND_RNG: Command = Command::Vendor(VendorCommand::H60);
 
 #[cfg(feature = "ctaphid")]
-impl<'a, C: Client> ctaphid_dispatch::app::App<'a> for DummyApp<C> {
+impl<C: Client, const N: usize> ctaphid_dispatch::app::App<'_, N> for DummyApp<C> {
     fn commands(&self) -> &'static [Command] {
         &[CTAPHID_COMMAND_RNG]
     }
 
-    fn call(&mut self, command: Command, _request: &Message, response: &mut Message) -> AppResult {
+    fn call(
+        &mut self,
+        command: Command,
+        _request: &[u8],
+        response: &mut heapless_bytes::Bytes<N>,
+    ) -> AppResult {
         match command {
             CTAPHID_COMMAND_RNG => self.rng(response),
             _ => return Err(Error::InvalidCommand),
@@ -93,7 +99,7 @@ impl<'a, S: StoreProvider> trussed_usbip::Apps<'a, S, CoreOnly>
     type Data = ();
 
     fn new(service: &mut Service<Platform<S>, CoreOnly>, syscall: Syscall, _data: ()) -> Self {
-        let client = ClientBuilder::new("dummy")
+        let client = ClientBuilder::new(path!("dummy"))
             .prepare(service)
             .unwrap()
             .build(syscall);
@@ -104,7 +110,12 @@ impl<'a, S: StoreProvider> trussed_usbip::Apps<'a, S, CoreOnly>
     #[cfg(feature = "ctaphid")]
     fn with_ctaphid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'a>]) -> T,
+        f: impl FnOnce(
+            &mut [&mut dyn ctaphid_dispatch::app::App<
+                'a,
+                { ctaphid_dispatch::types::MESSAGE_SIZE },
+            >],
+        ) -> T,
     ) -> T {
         f(&mut [&mut self.dummy])
     }

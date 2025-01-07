@@ -57,7 +57,12 @@ pub trait Apps<'interrupt, S: StoreProvider, D: Dispatch> {
     #[cfg(feature = "ctaphid")]
     fn with_ctaphid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'interrupt>]) -> T,
+        f: impl FnOnce(
+            &mut [&mut dyn ctaphid_dispatch::app::App<
+                'interrupt,
+                { ctaphid_dispatch::types::MESSAGE_SIZE },
+            >],
+        ) -> T,
     ) -> T;
 
     #[cfg(feature = "ccid")]
