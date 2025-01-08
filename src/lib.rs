@@ -60,7 +60,7 @@ pub trait Apps<'interrupt, S: StoreProvider, D: Dispatch> {
         f: impl FnOnce(
             &mut [&mut dyn ctaphid_dispatch::app::App<
                 'interrupt,
-                { ctaphid_dispatch::types::MESSAGE_SIZE },
+                { ctaphid_dispatch::MESSAGE_SIZE },
             >],
         ) -> T,
     ) -> T;
@@ -96,7 +96,7 @@ impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, S, D>> Runne
             let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
 
             #[cfg(feature = "ctaphid")]
-            let ctap_channel = ctaphid_dispatch::types::Channel::new();
+            let ctap_channel = ctaphid_dispatch::Channel::new();
             #[cfg(feature = "ctaphid")]
             let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator, &ctap_channel);
 

@@ -12,10 +12,7 @@ use std::path::PathBuf;
 #[cfg(feature = "ccid")]
 use apdu_dispatch::command::SIZE as ApduCommandSize;
 #[cfg(feature = "ctaphid")]
-use ctaphid_dispatch::{
-    command::{Command, VendorCommand},
-    types::{AppResult, Error},
-};
+use ctaphid_dispatch::app::{Command, Error, VendorCommand};
 
 use clap::Parser;
 use clap_num::maybe_hex;
@@ -80,7 +77,7 @@ impl<C: Client, const N: usize> ctaphid_dispatch::app::App<'_, N> for DummyApp<C
         command: Command,
         _request: &[u8],
         response: &mut heapless_bytes::Bytes<N>,
-    ) -> AppResult {
+    ) -> Result<(), Error> {
         match command {
             CTAPHID_COMMAND_RNG => self.rng(response),
             _ => return Err(Error::InvalidCommand),
@@ -111,10 +108,7 @@ impl<'a, S: StoreProvider> trussed_usbip::Apps<'a, S, CoreOnly>
     fn with_ctaphid_apps<T>(
         &mut self,
         f: impl FnOnce(
-            &mut [&mut dyn ctaphid_dispatch::app::App<
-                'a,
-                { ctaphid_dispatch::types::MESSAGE_SIZE },
-            >],
+            &mut [&mut dyn ctaphid_dispatch::app::App<'a, { ctaphid_dispatch::MESSAGE_SIZE }>],
         ) -> T,
     ) -> T {
         f(&mut [&mut self.dummy])

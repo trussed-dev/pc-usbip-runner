@@ -342,9 +342,9 @@ dependencies = [
 
 [[package]]
 name = "ctaphid-app"
-version = "0.1.0-rc.1"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1179116598f4f53694ce2fda6bb38183f71efcb9ff6385d08ca1d79d6254841"
+checksum = "1fe93489fe96c998488d0843dffea35c02ed9add2585e55228e1d45988727ecc"
 dependencies = [
  "heapless-bytes",
  "trussed-core",
@@ -352,8 +352,9 @@ dependencies = [
 
 [[package]]
 name = "ctaphid-dispatch"
-version = "0.1.1"
-source = "git+https://github.com/trussed-dev/ctaphid-dispatch.git?rev=5a2864c76fea6785d9ffe4c7b6596237d8378755#5a2864c76fea6785d9ffe4c7b6596237d8378755"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "27caf0a07de6b0af58ba69562c1834ddf7aa27bc1d1687fed3b18fea1501e59e"
 dependencies = [
  "ctaphid-app",
  "delog",
@@ -1489,9 +1490,9 @@ dependencies = [
 
 [[package]]
 name = "trussed-core"
-version = "0.1.0-rc.1"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc8831dee63f373a6bb031caac114c6672d593d03e371fd95b41a47be7d415e0"
+checksum = "afddad280ae8a5235e1b06408cca909ce9454cdd89f941b94b024c580732b3ce"
 dependencies = [
  "heapless-bytes",
  "littlefs2-core",
@@ -1559,7 +1560,8 @@ checksum = "1f6cc3adc849b5292b4075fc0d5fdcf2f24866e88e336dd27a8943090a520508"
 [[package]]
 name = "usbd-ccid"
 version = "0.3.0"
-source = "git+https://github.com/trussed-dev/usbd-ccid?tag=0.3.0#0a31e9cf7c5aa8498c65982c95b9faeebe8e3f52"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "403fefa622483869d1b36f2accd7458291202c18aa2f2e5147caf638825dde0c"
 dependencies = [
  "delog",
  "embedded-time",
@@ -1571,8 +1573,9 @@ dependencies = [
 
 [[package]]
 name = "usbd-ctaphid"
-version = "0.1.0"
-source = "git+https://github.com/trussed-dev/usbd-ctaphid.git?rev=96bf04e97cfc8077b4d9b6b97b3e34ec3ca3e2fc#96bf04e97cfc8077b4d9b6b97b3e34ec3ca3e2fc"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "092fad7bf817001ecade9272fe6ccbea4e5d0c02f99ca24c4c5ce97fbbff5371"
 dependencies = [
  "ctaphid-dispatch",
  "delog",

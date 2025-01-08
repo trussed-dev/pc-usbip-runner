@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use ctaphid_dispatch::dispatch::Dispatch;
+use ctaphid_dispatch::Dispatch;
 use usb_device::bus::{UsbBus, UsbBusAllocator};
 use usbd_ctaphid::{types::Status, CtapHid};
 
@@ -11,7 +11,7 @@ use super::{Timeout, IS_WAITING};
 
 pub fn setup<'bus, 'pipe, 'interrupt, B: UsbBus>(
     bus_allocator: &'bus UsbBusAllocator<B>,
-    interchange: &'pipe ctaphid_dispatch::types::Channel,
+    interchange: &'pipe ctaphid_dispatch::Channel,
 ) -> (
     CtapHid<'bus, 'pipe, 'interrupt, B>,
     Dispatch<'pipe, 'interrupt>,
