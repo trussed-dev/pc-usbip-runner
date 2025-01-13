@@ -26,7 +26,7 @@ delog = { version = "0.1.6", features = ["std-log"] }
 heapless-bytes = "0.3"
 littlefs2-core = "0.1"
 pretty_env_logger = "0.4.0"
-trussed = { version = "0.1", features = ["clients-1"] }
+trussed = "0.1"
 
 [features]
 default = ["ctaphid", "ccid"]
@@ -34,4 +34,4 @@ ctaphid = ["ctaphid-dispatch", "usbd-ctaphid"]
 ccid = ["apdu-dispatch", "usbd-ccid"]
 
 [patch.crates-io]
-trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "6bba8fde36d05c0227769eb63345744e87d84b2b" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "805fe7657e79e06b3220324481cd6325b94877d7" }

@@ -15,6 +15,7 @@ use std::{
 
 use trussed::{
     backend::{CoreOnly, Dispatch},
+    pipe::ServiceEndpoint,
     service::Service,
     virt::{self, Platform, StoreProvider},
     ClientImplementation,
@@ -31,7 +32,7 @@ pub fn set_waiting(waiting: bool) {
     IS_WAITING.store(waiting, Ordering::Relaxed)
 }
 
-pub type Client<D = CoreOnly> = ClientImplementation<Syscall, D>;
+pub type Client<D = CoreOnly> = ClientImplementation<'static, Syscall, D>;
 
 pub type InitPlatform<S> = Box<dyn Fn(&mut Platform<S>)>;
 
@@ -52,7 +53,12 @@ impl Options {
 pub trait Apps<'interrupt, S: StoreProvider, D: Dispatch> {
     type Data;
 
-    fn new(service: &mut Service<Platform<S>, D>, syscall: Syscall, data: Self::Data) -> Self;
+    fn new(
+        service: &mut Service<Platform<S>, D>,
+        endpoints: &mut Vec<ServiceEndpoint<'static, D::BackendId, D::Context>>,
+        syscall: Syscall,
+        data: Self::Data,
+    ) -> Self;
 
     #[cfg(feature = "ctaphid")]
     fn with_ctaphid_apps<T>(
@@ -80,7 +86,11 @@ pub struct Runner<S: StoreProvider, D, A> {
     _marker: PhantomData<A>,
 }
 
-impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, S, D>> Runner<S, D, A> {
+impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, S, D>> Runner<S, D, A>
+where
+    D::BackendId: Send + Sync,
+    D::Context: Send + Sync,
+{
     pub fn builder(store: S, options: Options) -> Builder<S> {
         Builder::new(store, options)
     }
@@ -107,9 +117,10 @@ impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, S, D>> Runne
 
             let mut usb_device = build_device(&bus_allocator, &self.options);
             let mut service = Service::with_dispatch(platform, self.dispatch);
+            let mut endpoints = Vec::new();
             let (syscall_sender, syscall_receiver) = mpsc::channel();
             let syscall = Syscall(syscall_sender);
-            let mut apps = A::new(&mut service, syscall, data);
+            let mut apps = A::new(&mut service, &mut endpoints, syscall, data);
 
             log::info!("Ready for work");
             thread::scope(|s| {
@@ -140,7 +151,7 @@ impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, S, D>> Runne
                 // trussed task
                 s.spawn(move || {
                     for _ in syscall_receiver.iter() {
-                        service.process()
+                        service.process(&mut endpoints)
                     }
                 });
 

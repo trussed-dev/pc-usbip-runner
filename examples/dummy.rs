@@ -18,11 +18,12 @@ use clap::Parser;
 use clap_num::maybe_hex;
 use littlefs2_core::path;
 use trussed::{
-    backend::CoreOnly,
-    client::{Client, ClientBuilder},
+    backend::{CoreOnly, NoId},
+    client::Client,
+    pipe::{ServiceEndpoint, TrussedChannel},
     service::Service,
     syscall,
-    types::Vec,
+    types::{CoreContext, NoData},
     virt::{self, Platform, StoreProvider},
 };
 use trussed_usbip::Syscall;
@@ -57,7 +58,7 @@ struct DummyApp<C: Client> {
 }
 
 impl<C: Client> DummyApp<C> {
-    fn rng<const N: usize>(&mut self, response: &mut Vec<u8, N>) {
+    fn rng<const N: usize>(&mut self, response: &mut heapless_bytes::Bytes<N>) {
         let bytes = syscall!(self.client.random_bytes(57)).bytes;
         response.extend_from_slice(&bytes).unwrap();
     }
@@ -95,11 +96,17 @@ impl<'a, S: StoreProvider> trussed_usbip::Apps<'a, S, CoreOnly>
 {
     type Data = ();
 
-    fn new(service: &mut Service<Platform<S>, CoreOnly>, syscall: Syscall, _data: ()) -> Self {
-        let client = ClientBuilder::new(path!("dummy"))
-            .prepare(service)
-            .unwrap()
-            .build(syscall);
+    fn new(
+        _service: &mut Service<Platform<S>, CoreOnly>,
+        endpoints: &mut Vec<ServiceEndpoint<'static, NoId, NoData>>,
+        syscall: Syscall,
+        _data: (),
+    ) -> Self {
+        static CHANNEL: TrussedChannel = TrussedChannel::new();
+        let (requester, responder) = CHANNEL.split().unwrap();
+        let context = CoreContext::new(path!("dummy").into());
+        endpoints.push(ServiceEndpoint::new(responder, context, &[]));
+        let client = trussed_usbip::Client::new(requester, syscall, None);
         let dummy = DummyApp { client };
         Self { dummy }
     }
