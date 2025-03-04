@@ -13,11 +13,16 @@ use std::{
     time::{Duration, Instant},
 };
 
+use littlefs2_core::DynFilesystem;
+use rand_chacha::ChaCha8Rng;
+use rand_core::SeedableRng as _;
 use trussed::{
     backend::{CoreOnly, Dispatch},
     pipe::ServiceEndpoint,
+    platform,
     service::Service,
-    virt::{self, Platform, StoreProvider},
+    store,
+    virt::UserInterface,
     ClientImplementation,
 };
 use usb_device::{
@@ -34,7 +39,7 @@ pub fn set_waiting(waiting: bool) {
 
 pub type Client<D = CoreOnly> = ClientImplementation<'static, Syscall, D>;
 
-pub type InitPlatform<S> = Box<dyn Fn(&mut Platform<S>)>;
+pub type InitPlatform = Box<dyn Fn(&mut Platform)>;
 
 pub struct Options {
     pub manufacturer: Option<String>,
@@ -50,11 +55,11 @@ impl Options {
     }
 }
 
-pub trait Apps<'interrupt, S: StoreProvider, D: Dispatch> {
+pub trait Apps<'interrupt, D: Dispatch> {
     type Data;
 
     fn new(
-        service: &mut Service<Platform<S>, D>,
+        service: &mut Service<Platform, D>,
         endpoints: &mut Vec<ServiceEndpoint<'static, D::BackendId, D::Context>>,
         syscall: Syscall,
         data: Self::Data,
@@ -78,140 +83,173 @@ pub trait Apps<'interrupt, S: StoreProvider, D: Dispatch> {
     ) -> T;
 }
 
-pub struct Runner<S: StoreProvider, D, A> {
-    store: S,
+// virt::Store uses non-static references.  To be able to use the usbip runner with apps that
+// require direct access to the store, e. g. provisioner-app, we use a custom store implementation
+// with static lifetimes here.
+#[derive(Copy, Clone)]
+pub struct Store {
+    pub ifs: &'static dyn DynFilesystem,
+    pub efs: &'static dyn DynFilesystem,
+    pub vfs: &'static dyn DynFilesystem,
+}
+
+impl store::Store for Store {
+    fn ifs(&self) -> &'static dyn DynFilesystem {
+        self.ifs
+    }
+
+    fn efs(&self) -> &'static dyn DynFilesystem {
+        self.efs
+    }
+
+    fn vfs(&self) -> &'static dyn DynFilesystem {
+        self.vfs
+    }
+}
+
+pub struct Platform {
+    rng: ChaCha8Rng,
+    store: Store,
+    ui: UserInterface,
+}
+
+impl Platform {
+    pub fn new(store: Store) -> Self {
+        Self {
+            store,
+            rng: ChaCha8Rng::from_entropy(),
+            ui: UserInterface::new(),
+        }
+    }
+}
+
+unsafe impl platform::Platform for Platform {
+    type R = ChaCha8Rng;
+    type S = Store;
+    type UI = UserInterface;
+
+    fn user_interface(&mut self) -> &mut Self::UI {
+        &mut self.ui
+    }
+
+    fn rng(&mut self) -> &mut Self::R {
+        &mut self.rng
+    }
+
+    fn store(&self) -> Self::S {
+        self.store
+    }
+}
+
+pub struct Runner<D, A> {
     options: Options,
     dispatch: D,
-    init_platform: Option<InitPlatform<S>>,
     _marker: PhantomData<A>,
 }
 
-impl<'interrupt, S: StoreProvider, D: Dispatch, A: Apps<'interrupt, S, D>> Runner<S, D, A>
+impl<'interrupt, D: Dispatch, A: Apps<'interrupt, D>> Runner<D, A>
 where
     D::BackendId: Send + Sync,
     D::Context: Send + Sync,
 {
-    pub fn builder(store: S, options: Options) -> Builder<S> {
-        Builder::new(store, options)
+    pub fn builder(options: Options) -> Builder {
+        Builder::new(options)
     }
 
-    pub fn exec<F: Fn(&mut Platform<S>) -> A::Data>(self, make_data: F) {
-        virt::with_platform(self.store, |mut platform| {
-            if let Some(init_platform) = &self.init_platform {
-                init_platform(&mut platform);
-            }
-            let data = make_data(&mut platform);
+    pub fn exec(self, platform: Platform, data: A::Data) {
+        // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
+        let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
 
-            // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
-            let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
+        #[cfg(feature = "ctaphid")]
+        let ctap_channel = ctaphid_dispatch::Channel::new();
+        #[cfg(feature = "ctaphid")]
+        let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator, &ctap_channel);
 
-            #[cfg(feature = "ctaphid")]
-            let ctap_channel = ctaphid_dispatch::Channel::new();
-            #[cfg(feature = "ctaphid")]
-            let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator, &ctap_channel);
+        #[cfg(feature = "ccid")]
+        let (contact, contactless) = Default::default();
+        #[cfg(feature = "ccid")]
+        let (mut ccid, mut apdu_dispatch) = ccid::setup(&bus_allocator, &contact, &contactless);
 
-            #[cfg(feature = "ccid")]
-            let (contact, contactless) = Default::default();
-            #[cfg(feature = "ccid")]
-            let (mut ccid, mut apdu_dispatch) = ccid::setup(&bus_allocator, &contact, &contactless);
+        let mut usb_device = build_device(&bus_allocator, &self.options);
+        let mut service = Service::with_dispatch(platform, self.dispatch);
+        let mut endpoints = Vec::new();
+        let (syscall_sender, syscall_receiver) = mpsc::channel();
+        let syscall = Syscall(syscall_sender);
+        let mut apps = A::new(&mut service, &mut endpoints, syscall, data);
 
-            let mut usb_device = build_device(&bus_allocator, &self.options);
-            let mut service = Service::with_dispatch(platform, self.dispatch);
-            let mut endpoints = Vec::new();
-            let (syscall_sender, syscall_receiver) = mpsc::channel();
-            let syscall = Syscall(syscall_sender);
-            let mut apps = A::new(&mut service, &mut endpoints, syscall, data);
+        log::info!("Ready for work");
+        thread::scope(|s| {
+            // usb poll + keepalive task
+            s.spawn(move || {
+                let _epoch = Instant::now();
+                #[cfg(feature = "ctaphid")]
+                let mut timeout_ctaphid = Timeout::new();
+                #[cfg(feature = "ccid")]
+                let mut timeout_ccid = Timeout::new();
 
-            log::info!("Ready for work");
-            thread::scope(|s| {
-                // usb poll + keepalive task
-                s.spawn(move || {
-                    let _epoch = Instant::now();
-                    #[cfg(feature = "ctaphid")]
-                    let mut timeout_ctaphid = Timeout::new();
-                    #[cfg(feature = "ccid")]
-                    let mut timeout_ccid = Timeout::new();
-
-                    loop {
-                        thread::sleep(Duration::from_millis(5));
-                        usb_device.poll(&mut [
-                            #[cfg(feature = "ctaphid")]
-                            &mut ctaphid,
-                            #[cfg(feature = "ccid")]
-                            &mut ccid,
-                        ]);
-
-                        #[cfg(feature = "ctaphid")]
-                        ctaphid::keepalive(&mut ctaphid, &mut timeout_ctaphid, _epoch);
-                        #[cfg(feature = "ccid")]
-                        ccid::keepalive(&mut ccid, &mut timeout_ccid, _epoch);
-                    }
-                });
-
-                // trussed task
-                s.spawn(move || {
-                    for _ in syscall_receiver.iter() {
-                        service.process(&mut endpoints)
-                    }
-                });
-
-                // apps task
                 loop {
                     thread::sleep(Duration::from_millis(5));
+                    usb_device.poll(&mut [
+                        #[cfg(feature = "ctaphid")]
+                        &mut ctaphid,
+                        #[cfg(feature = "ccid")]
+                        &mut ccid,
+                    ]);
+
                     #[cfg(feature = "ctaphid")]
-                    apps.with_ctaphid_apps(|apps| ctaphid_dispatch.poll(apps));
+                    ctaphid::keepalive(&mut ctaphid, &mut timeout_ctaphid, _epoch);
                     #[cfg(feature = "ccid")]
-                    apps.with_ccid_apps(|apps| apdu_dispatch.poll(apps));
+                    ccid::keepalive(&mut ccid, &mut timeout_ccid, _epoch);
                 }
             });
-        })
+
+            // trussed task
+            s.spawn(move || {
+                for _ in syscall_receiver.iter() {
+                    service.process(&mut endpoints)
+                }
+            });
+
+            // apps task
+            loop {
+                thread::sleep(Duration::from_millis(5));
+                #[cfg(feature = "ctaphid")]
+                apps.with_ctaphid_apps(|apps| ctaphid_dispatch.poll(apps));
+                #[cfg(feature = "ccid")]
+                apps.with_ccid_apps(|apps| apdu_dispatch.poll(apps));
+            }
+        });
     }
 }
 
-pub struct Builder<S: StoreProvider, D = CoreOnly> {
-    store: S,
+pub struct Builder<D = CoreOnly> {
     options: Options,
     dispatch: D,
-    init_platform: Option<InitPlatform<S>>,
 }
 
-impl<S: StoreProvider> Builder<S> {
-    pub fn new(store: S, options: Options) -> Self {
+impl Builder {
+    pub fn new(options: Options) -> Self {
         Self {
-            store,
             options,
             dispatch: Default::default(),
-            init_platform: Default::default(),
         }
     }
 }
 
-impl<S: StoreProvider, D> Builder<S, D> {
-    pub fn dispatch<E>(self, dispatch: E) -> Builder<S, E> {
+impl<D> Builder<D> {
+    pub fn dispatch<E>(self, dispatch: E) -> Builder<E> {
         Builder {
-            store: self.store,
             options: self.options,
             dispatch,
-            init_platform: self.init_platform,
         }
-    }
-
-    pub fn init_platform<F>(mut self, f: F) -> Self
-    where
-        F: Fn(&mut Platform<S>) + 'static,
-    {
-        self.init_platform = Some(Box::new(f));
-        self
     }
 }
 
-impl<S: StoreProvider, D: Dispatch> Builder<S, D> {
-    pub fn build<'interrupt, A: Apps<'interrupt, S, D>>(self) -> Runner<S, D, A> {
+impl<D: Dispatch> Builder<D> {
+    pub fn build<'interrupt, A: Apps<'interrupt, D>>(self) -> Runner<D, A> {
         Runner {
-            store: self.store,
             options: self.options,
             dispatch: self.dispatch,
-            init_platform: self.init_platform,
             _marker: Default::default(),
         }
     }

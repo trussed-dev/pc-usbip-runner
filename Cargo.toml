@@ -6,7 +6,10 @@ edition = "2021"
 
 [dependencies]
 interchange = "0.3.0"
+littlefs2-core = "0.1"
 log = { version = "0.4.14", default-features = false }
+rand_chacha = { version = "0.3", default-features = false }
+rand_core = { version = "0.6", features = ["getrandom"] }
 trussed = { version = "0.1", default-features = false, features = ["log-all", "virt"] }
 usb-device = { version = "0.2.7", default-features = false }
 usbip-device = "0.1.5"
@@ -24,7 +27,7 @@ clap = { version = "3.0.0", features = ["derive"] }
 clap-num = "1.0.0"
 delog = { version = "0.1.6", features = ["std-log"] }
 heapless-bytes = "0.3"
-littlefs2-core = "0.1"
+littlefs2 = "0.6"
 pretty_env_logger = "0.4.0"
 trussed = "0.1"
 
@@ -34,4 +37,4 @@ ctaphid = ["ctaphid-dispatch", "usbd-ctaphid"]
 ccid = ["apdu-dispatch", "usbd-ccid"]
 
 [patch.crates-io]
-trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "805fe7657e79e06b3220324481cd6325b94877d7" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "ac106d63ab5e19021b0e37f0efb4313f8168a110" }

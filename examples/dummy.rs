@@ -16,7 +16,11 @@ use ctaphid_dispatch::app::{Command, Error, VendorCommand};
 
 use clap::Parser;
 use clap_num::maybe_hex;
-use littlefs2_core::path;
+use littlefs2::{
+    const_ram_storage,
+    fs::{Allocation, Filesystem},
+};
+use littlefs2_core::{path, DynFilesystem};
 use trussed::{
     backend::{CoreOnly, NoId},
     client::Client,
@@ -24,9 +28,8 @@ use trussed::{
     service::Service,
     syscall,
     types::{CoreContext, NoData},
-    virt::{self, Platform, StoreProvider},
 };
-use trussed_usbip::Syscall;
+use trussed_usbip::{Platform, Store, Syscall};
 
 /// USP/IP based virtualization a Trussed device.
 #[derive(Parser, Debug)]
@@ -91,13 +94,11 @@ struct Apps<C: Client> {
     dummy: DummyApp<C>,
 }
 
-impl<'a, S: StoreProvider> trussed_usbip::Apps<'a, S, CoreOnly>
-    for Apps<trussed_usbip::Client<CoreOnly>>
-{
+impl<'a> trussed_usbip::Apps<'a, CoreOnly> for Apps<trussed_usbip::Client<CoreOnly>> {
     type Data = ();
 
     fn new(
-        _service: &mut Service<Platform<S>, CoreOnly>,
+        _service: &mut Service<Platform, CoreOnly>,
         endpoints: &mut Vec<ServiceEndpoint<'static, NoId, NoData>>,
         syscall: Syscall,
         _data: (),
@@ -130,12 +131,27 @@ impl<'a, S: StoreProvider> trussed_usbip::Apps<'a, S, CoreOnly>
     }
 }
 
+const_ram_storage!(RamStorage, 512 * 128);
+
+fn ram_filesystem() -> &'static dyn DynFilesystem {
+    let storage = Box::leak(Box::new(RamStorage::new()));
+    Filesystem::format(storage).expect("failed to format RAM filesystem");
+    let alloc = Box::leak(Box::new(Allocation::new()));
+    let fs = Filesystem::mount(alloc, storage).expect("failed to mount RAM filesystem");
+    Box::leak(Box::new(fs))
+}
+
 fn main() {
     pretty_env_logger::init();
 
     let args = Args::parse();
 
-    let store = virt::Filesystem::new(args.state_file);
+    // TODO: use filesystem storage for IFS
+    let store = Store {
+        ifs: ram_filesystem(),
+        efs: ram_filesystem(),
+        vfs: ram_filesystem(),
+    };
     let options = trussed_usbip::Options {
         manufacturer: Some(args.manufacturer),
         product: Some(args.name),
@@ -145,7 +161,8 @@ fn main() {
     };
 
     log::info!("Initializing Trussed");
-    trussed_usbip::Builder::new(store, options)
+    let platform = Platform::new(store);
+    trussed_usbip::Builder::new(options)
         .build::<Apps<_>>()
-        .exec(|_| ());
+        .exec(platform, ());
 }
