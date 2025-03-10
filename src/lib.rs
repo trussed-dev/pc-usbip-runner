@@ -123,7 +123,7 @@ impl Platform {
     }
 }
 
-unsafe impl platform::Platform for Platform {
+impl platform::Platform for Platform {
     type R = ChaCha8Rng;
     type S = Store;
     type UI = UserInterface;
