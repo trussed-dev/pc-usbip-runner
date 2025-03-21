@@ -9,8 +9,6 @@
 
 use std::path::PathBuf;
 
-#[cfg(feature = "ccid")]
-use apdu_dispatch::command::SIZE as ApduCommandSize;
 #[cfg(feature = "ctaphid")]
 use ctaphid_dispatch::app::{Command, Error, VendorCommand};
 
@@ -113,19 +111,17 @@ impl<'a> trussed_usbip::Apps<'a, CoreOnly> for Apps<trussed_usbip::Client<CoreOn
     }
 
     #[cfg(feature = "ctaphid")]
-    fn with_ctaphid_apps<T>(
+    fn with_ctaphid_apps<T, const N: usize>(
         &mut self,
-        f: impl FnOnce(
-            &mut [&mut dyn ctaphid_dispatch::app::App<'a, { ctaphid_dispatch::MESSAGE_SIZE }>],
-        ) -> T,
+        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'a, N>]) -> T,
     ) -> T {
         f(&mut [&mut self.dummy])
     }
 
     #[cfg(feature = "ccid")]
-    fn with_ccid_apps<T>(
+    fn with_ccid_apps<T, const N: usize>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<ApduCommandSize>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<N>]) -> T,
     ) -> T {
         f(&mut [])
     }

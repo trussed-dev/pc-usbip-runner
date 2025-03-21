@@ -15,8 +15,8 @@ usb-device = { version = "0.2.7", default-features = false }
 usbip-device = "0.1.5"
 
 # ctaphid
-ctaphid-dispatch = { version = "0.2", features = ["log-all"], optional = true }
-usbd-ctaphid = { version = "0.2", features = ["log-all"], optional = true }
+ctaphid-dispatch = { version = "0.3", features = ["log-all"], optional = true }
+usbd-ctaphid = { version = "0.3", features = ["log-all"], optional = true }
 
 # ccid
 apdu-dispatch = { version = "0.3", optional = true }

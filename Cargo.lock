@@ -350,9 +350,9 @@ dependencies = [
 
 [[package]]
 name = "ctaphid-dispatch"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27caf0a07de6b0af58ba69562c1834ddf7aa27bc1d1687fed3b18fea1501e59e"
+checksum = "38fd4316573df369820c5a9f8285fe522d8871c0b20bcf7d390f73b8e6caee28"
 dependencies = [
  "ctaphid-app",
  "delog",
@@ -1562,9 +1562,9 @@ dependencies = [
 
 [[package]]
 name = "usbd-ctaphid"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "092fad7bf817001ecade9272fe6ccbea4e5d0c02f99ca24c4c5ce97fbbff5371"
+checksum = "82f5a2aa6898726b4eeb3fa3796fb8dc49e76e2a16bd683db103f63bc8ceca97"
 dependencies = [
  "ctaphid-dispatch",
  "delog",

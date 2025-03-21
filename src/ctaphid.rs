@@ -9,12 +9,12 @@ use usbd_ctaphid::{types::Status, CtapHid};
 
 use super::{Timeout, IS_WAITING};
 
-pub fn setup<'bus, 'pipe, 'interrupt, B: UsbBus>(
+pub fn setup<'bus, 'pipe, 'interrupt, B: UsbBus, const N: usize>(
     bus_allocator: &'bus UsbBusAllocator<B>,
-    interchange: &'pipe ctaphid_dispatch::Channel,
+    interchange: &'pipe ctaphid_dispatch::Channel<N>,
 ) -> (
-    CtapHid<'bus, 'pipe, 'interrupt, B>,
-    Dispatch<'pipe, 'interrupt>,
+    CtapHid<'bus, 'pipe, 'interrupt, B, N>,
+    Dispatch<'pipe, 'interrupt, N>,
 ) {
     let (ctaphid_rq, ctaphid_rp) = interchange.split().unwrap();
     let ctaphid = CtapHid::new(bus_allocator, ctaphid_rq, 0u32)
@@ -25,8 +25,8 @@ pub fn setup<'bus, 'pipe, 'interrupt, B: UsbBus>(
     (ctaphid, ctaphid_dispatch)
 }
 
-pub fn keepalive<B: UsbBus>(
-    ctaphid: &mut CtapHid<'_, '_, '_, B>,
+pub fn keepalive<B: UsbBus, const N: usize>(
+    ctaphid: &mut CtapHid<'_, '_, '_, B, N>,
     timeout: &mut Timeout,
     epoch: Instant,
 ) {

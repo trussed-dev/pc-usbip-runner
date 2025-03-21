@@ -66,20 +66,15 @@ pub trait Apps<'interrupt, D: Dispatch> {
     ) -> Self;
 
     #[cfg(feature = "ctaphid")]
-    fn with_ctaphid_apps<T>(
+    fn with_ctaphid_apps<T, const N: usize>(
         &mut self,
-        f: impl FnOnce(
-            &mut [&mut dyn ctaphid_dispatch::app::App<
-                'interrupt,
-                { ctaphid_dispatch::MESSAGE_SIZE },
-            >],
-        ) -> T,
+        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'interrupt, N>]) -> T,
     ) -> T;
 
     #[cfg(feature = "ccid")]
-    fn with_ccid_apps<T>(
+    fn with_ccid_apps<T, const N: usize>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<7609>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<N>]) -> T,
     ) -> T;
 }
 
@@ -163,7 +158,10 @@ where
         #[cfg(feature = "ctaphid")]
         let ctap_channel = ctaphid_dispatch::Channel::new();
         #[cfg(feature = "ctaphid")]
-        let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup(&bus_allocator, &ctap_channel);
+        let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup::<
+            _,
+            { ctaphid_dispatch::DEFAULT_MESSAGE_SIZE },
+        >(&bus_allocator, &ctap_channel);
 
         #[cfg(feature = "ccid")]
         let (contact, contactless) = Default::default();
