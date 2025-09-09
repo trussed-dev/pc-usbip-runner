@@ -59,7 +59,7 @@ struct DummyApp<C: Client> {
 }
 
 impl<C: Client> DummyApp<C> {
-    fn rng<const N: usize>(&mut self, response: &mut heapless_bytes::Bytes<N>) {
+    fn rng(&mut self, response: &mut heapless_bytes::BytesView) {
         let bytes = syscall!(self.client.random_bytes(57)).bytes;
         response.extend_from_slice(&bytes).unwrap();
     }
@@ -69,7 +69,7 @@ impl<C: Client> DummyApp<C> {
 const CTAPHID_COMMAND_RNG: Command = Command::Vendor(VendorCommand::H60);
 
 #[cfg(feature = "ctaphid")]
-impl<C: Client, const N: usize> ctaphid_dispatch::app::App<'_, N> for DummyApp<C> {
+impl<C: Client> ctaphid_dispatch::app::App<'_> for DummyApp<C> {
     fn commands(&self) -> &'static [Command] {
         &[CTAPHID_COMMAND_RNG]
     }
@@ -78,7 +78,7 @@ impl<C: Client, const N: usize> ctaphid_dispatch::app::App<'_, N> for DummyApp<C
         &mut self,
         command: Command,
         _request: &[u8],
-        response: &mut heapless_bytes::Bytes<N>,
+        response: &mut heapless_bytes::BytesView,
     ) -> Result<(), Error> {
         match command {
             CTAPHID_COMMAND_RNG => self.rng(response),
@@ -111,17 +111,17 @@ impl<'a> trussed_usbip::Apps<'a, CoreOnly> for Apps<trussed_usbip::Client<CoreOn
     }
 
     #[cfg(feature = "ctaphid")]
-    fn with_ctaphid_apps<T, const N: usize>(
+    fn with_ctaphid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'a, N>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'a>]) -> T,
     ) -> T {
         f(&mut [&mut self.dummy])
     }
 
     #[cfg(feature = "ccid")]
-    fn with_ccid_apps<T, const N: usize>(
+    fn with_ccid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<N>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App]) -> T,
     ) -> T {
         f(&mut [])
     }

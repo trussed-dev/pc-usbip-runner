@@ -66,15 +66,15 @@ pub trait Apps<'interrupt, D: Dispatch> {
     ) -> Self;
 
     #[cfg(feature = "ctaphid")]
-    fn with_ctaphid_apps<T, const N: usize>(
+    fn with_ctaphid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'interrupt, N>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn ctaphid_dispatch::app::App<'interrupt>]) -> T,
     ) -> T;
 
     #[cfg(feature = "ccid")]
-    fn with_ccid_apps<T, const N: usize>(
+    fn with_ccid_apps<T>(
         &mut self,
-        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App<N>]) -> T,
+        f: impl FnOnce(&mut [&mut dyn apdu_dispatch::app::App]) -> T,
     ) -> T;
 }
 
