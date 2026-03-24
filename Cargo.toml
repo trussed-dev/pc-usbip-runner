@@ -15,12 +15,12 @@ usb-device = { version = "0.2.7", default-features = false }
 usbip-device = "0.1.5"
 
 # ctaphid
-ctaphid-dispatch = { version = "0.3", features = ["log-all"], optional = true }
-usbd-ctaphid = { version = "0.3", features = ["log-all"], optional = true }
+ctaphid-dispatch = { version = "0.4", features = ["log-all"], optional = true }
+usbd-ctaphid = { version = "0.4", features = ["log-all"], optional = true }
 
 # ccid
-apdu-dispatch = { version = "0.3", optional = true }
-usbd-ccid = { version = "0.3", features = ["log-all"], optional = true }
+apdu-dispatch = { version = "0.4", optional = true }
+usbd-ccid = { version = "0.4", features = ["log-all"], optional = true }
 
 [dev-dependencies]
 clap = { version = "3.0.0", features = ["derive"] }
@@ -37,14 +37,4 @@ ctaphid = ["ctaphid-dispatch", "usbd-ctaphid"]
 ccid = ["apdu-dispatch", "usbd-ccid"]
 
 [patch.crates-io]
-trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "e6bb61a716a3575b3e5d9869a0e1bb1740fe9969" }
-trussed-core = { git = "https://github.com/trussed-dev/trussed.git", rev = "e6bb61a716a3575b3e5d9869a0e1bb1740fe9969" }
-ctaphid-app = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev = "edc5d69eeb71e6718c60aad54574f6c3b824309c" }
-ctaphid-dispatch = { git = "https://github.com/trussed-dev/ctaphid-dispatch.git", rev = "edc5d69eeb71e6718c60aad54574f6c3b824309c" }
-apdu-app = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "931c4269d1d293954fae2012d809e9663cd2cb7e" }
-apdu-dispatch = { git = "https://github.com/trussed-dev/apdu-dispatch.git", rev = "931c4269d1d293954fae2012d809e9663cd2cb7e" }
-usbd-ctaphid = { git = "https://github.com/trussed-dev/usbd-ctaphid.git", rev = "94881f83a6b4229a7a3187a5dd7b3ccf6eb6dc00" }
-usbd-ccid = { git = "https://github.com/trussed-dev/usbd-ccid.git", rev = "045b8f16c6fc41ed71da3de2f47b9afa79535adf" }
-littlefs2 = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "e9d3a1ca98f80e92cd20ee9b94707067810b9036" }
-littlefs2-core = { git = "https://github.com/trussed-dev/littlefs2.git", rev = "e9d3a1ca98f80e92cd20ee9b94707067810b9036" }
-littlefs2-sys = { git = "https://github.com/trussed-dev/littlefs2-sys", rev = "v0.3.1-nitrokey.1" }
+trussed = { git = "https://github.com/trussed-dev/trussed.git", rev = "0f8df68be879acdde1f8cf428c11e5d29692a47b" }
