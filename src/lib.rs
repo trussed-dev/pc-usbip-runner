@@ -256,7 +256,7 @@ impl<D: Dispatch> Builder<D> {
 #[derive(Clone)]
 pub struct Syscall(Sender<()>);
 
-impl trussed::client::Syscall for Syscall {
+impl trussed::platform::Syscall for Syscall {
     fn syscall(&mut self) {
         log::debug!("syscall");
         self.0.send(()).ok();

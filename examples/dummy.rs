@@ -21,12 +21,12 @@ use littlefs2::{
 use littlefs2_core::{path, DynFilesystem};
 use trussed::{
     backend::{CoreOnly, NoId},
-    client::Client,
     pipe::{ServiceEndpoint, TrussedChannel},
     service::Service,
-    syscall,
     types::{CoreContext, NoData},
+    Client,
 };
+use trussed_core::syscall;
 use trussed_usbip::{Platform, Store, Syscall};
 
 /// USP/IP based virtualization a Trussed device.
