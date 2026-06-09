@@ -1471,8 +1471,7 @@ dependencies = [
 [[package]]
 name = "trussed"
 version = "0.2.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "400475917c40f07716c84b201a363012f6c9b1acdb4b38a5ed05e227539cd05c"
+source = "git+https://github.com/trussed-dev/trussed.git?branch=send#8538cf14cd43b983d3f3153b0bf1aabeef028319"
 dependencies = [
  "aead",
  "aes",

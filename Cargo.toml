@@ -39,3 +39,6 @@ ccid = ["apdu-dispatch", "usbd-ccid"]
 
 [package.metadata.docs.rs]
 all-features = true
+
+[patch.crates-io]
+trussed = { git = "https://github.com/trussed-dev/trussed.git", branch = "send" }

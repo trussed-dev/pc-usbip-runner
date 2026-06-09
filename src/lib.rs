@@ -104,6 +104,8 @@ impl store::Store for Store {
     }
 }
 
+unsafe impl Send for Store {}
+
 pub struct Platform {
     rng: ChaCha8Rng,
     store: Store,
@@ -146,6 +148,7 @@ pub struct Runner<D, A> {
 
 impl<'interrupt, D: Dispatch, A: Apps<'interrupt, D>> Runner<D, A>
 where
+    D: Send,
     D::BackendId: Send + Sync,
     D::Context: Send + Sync,
 {
