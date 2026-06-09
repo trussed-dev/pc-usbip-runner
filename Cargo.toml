@@ -36,3 +36,6 @@ trussed-core = "0.2"
 default = ["ctaphid", "ccid"]
 ctaphid = ["ctaphid-dispatch", "usbd-ctaphid"]
 ccid = ["apdu-dispatch", "usbd-ccid"]
+
+[package.metadata.docs.rs]
+all-features = true

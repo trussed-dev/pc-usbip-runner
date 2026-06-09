@@ -1,3 +1,5 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 #[cfg(feature = "ccid")]
 mod ccid;
 #[cfg(feature = "ctaphid")]
