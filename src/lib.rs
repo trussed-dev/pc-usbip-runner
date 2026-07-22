@@ -104,6 +104,8 @@ impl store::Store for Store {
     }
 }
 
+unsafe impl Send for Store {}
+
 pub struct Platform {
     rng: ChaCha8Rng,
     store: Store,
@@ -144,10 +146,12 @@ pub struct Runner<D, A> {
     _marker: PhantomData<A>,
 }
 
-impl<'interrupt, D: Dispatch, A: Apps<'interrupt, D>> Runner<D, A>
+impl<'interrupt, D, A> Runner<D, A>
 where
+    D: Dispatch + Send,
     D::BackendId: Send + Sync,
     D::Context: Send + Sync,
+    A: Apps<'interrupt, D>,
 {
     pub fn builder(options: Options) -> Builder {
         Builder::new(options)

@@ -1,6 +1,6 @@
 [package]
 name = "trussed-usbip"
-version = "0.1.0-rc.1"
+version = "0.1.0"
 description = "USBIP runner for trussed applications"
 authors = ["The Trussed developers", "Nicolas Stalder <n@stalder.io>", "Conor Patrick <conor@solokeys.com>", "Szczepan Zalega <szczepan@nitrokey.com>"]
 repository = "https://github.com/trussed-dev/pc-usbip-runner"
@@ -13,7 +13,7 @@ littlefs2-core = "0.1"
 log = { version = "0.4.14", default-features = false }
 rand_chacha = { version = "0.3", default-features = false }
 rand_core = { version = "0.6", features = ["getrandom"] }
-trussed = { version = "=0.2.0-rc.1", default-features = false, features = ["log-all", "virt"] }
+trussed = { version = "0.2", default-features = false, features = ["log-all", "virt"] }
 usb-device = { version = "0.2.7", default-features = false }
 usbip-device = "0.1.5"
 
@@ -30,9 +30,9 @@ clap = { version = "3.0.0", features = ["derive"] }
 clap-num = "1.0.0"
 delog = { version = "0.1.6", features = ["std-log"] }
 heapless-bytes = "0.5"
-littlefs2 = "0.7"
+littlefs2 = "0.8"
 pretty_env_logger = "0.4.0"
-trussed = "=0.2.0-rc.1"
+trussed = "0.2"
 trussed-core = "0.2"
 
 [features]

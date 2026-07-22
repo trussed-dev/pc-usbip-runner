@@ -764,9 +764,9 @@ dependencies = [
 
 [[package]]
 name = "littlefs2"
-version = "0.7.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8022e5141ceff5b7b12897113f54fc9dac5ad36402c787941c97272b9241eb"
+checksum = "3e00aee790b8914c83815e9f6952731f4ddd9965c160aa66fe2a89abeb5c406a"
 dependencies = [
  "bitflags 2.9.4",
  "delog",
@@ -789,9 +789,9 @@ dependencies = [
 
 [[package]]
 name = "littlefs2-sys"
-version = "0.3.2"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae112b732df34c1420471e1ff21c562dfdf81219efb5960dd15b3947097e784a"
+checksum = "999d08bb7fae46d63ecb98d2474d28f7af1a6c928a51b4dfe5f1804abf9afc46"
 dependencies = [
  "bindgen",
  "cc",
@@ -1470,9 +1470,9 @@ dependencies = [
 
 [[package]]
 name = "trussed"
-version = "0.2.0-rc.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "400475917c40f07716c84b201a363012f6c9b1acdb4b38a5ed05e227539cd05c"
+checksum = "7b5782830442198b88886b5e165b61b4626cda85316b7912e563950e65fa5e20"
 dependencies = [
  "aead",
  "aes",
@@ -1520,7 +1520,7 @@ dependencies = [
 
 [[package]]
 name = "trussed-usbip"
-version = "0.1.0-rc.1"
+version = "0.1.0"
 dependencies = [
  "apdu-dispatch",
  "clap",
