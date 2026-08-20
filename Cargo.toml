@@ -14,16 +14,17 @@ log = { version = "0.4.14", default-features = false }
 rand_chacha = { version = "0.3", default-features = false }
 rand_core = { version = "0.6", features = ["getrandom"] }
 trussed = { version = "0.2", default-features = false, features = ["log-all", "virt"] }
-usb-device = { version = "0.2.7", default-features = false }
-usbip-device = "0.1.5"
+usb-device = { version = "0.3.2", default-features = false }
+# usbip-device fork
+usbip-device = { git = "https://github.com/daringer/usbip-device", rev = "2daeb4282dcafa6c2b82e83949d8566dacc16e19" }
 
 # ctaphid
 ctaphid-dispatch = { version = "0.4", features = ["log-all"], optional = true }
-usbd-ctaphid = { version = "0.4", features = ["log-all"], optional = true }
+usbd-ctaphid = { version = "0.5", features = ["log-all"], optional = true }
 
 # ccid
 apdu-dispatch = { version = "0.4", optional = true }
-usbd-ccid = { version = "0.4", features = ["log-all"], optional = true }
+usbd-ccid = { version = "0.5", features = ["log-all"], optional = true }
 
 [dev-dependencies]
 clap = { version = "3.0.0", features = ["derive"] }
@@ -42,3 +43,4 @@ ccid = ["apdu-dispatch", "usbd-ccid"]
 
 [package.metadata.docs.rs]
 all-features = true
+

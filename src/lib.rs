@@ -273,17 +273,25 @@ fn build_device<'a, B: UsbBus>(
     bus_allocator: &'a UsbBusAllocator<B>,
     options: &'a Options,
 ) -> UsbDevice<'a, B> {
-    let mut usb_builder = UsbDeviceBuilder::new(bus_allocator, options.vid_pid());
+    use usb_device::prelude::{LangID, StringDescriptors};
+
+    let mut strings = StringDescriptors::new(LangID::EN);
     if let Some(manufacturer) = &options.manufacturer {
-        usb_builder = usb_builder.manufacturer(manufacturer);
+        strings = strings.manufacturer(manufacturer);
     }
     if let Some(product) = &options.product {
-        usb_builder = usb_builder.product(product);
+        strings = strings.product(product);
     }
     if let Some(serial_number) = &options.serial_number {
-        usb_builder = usb_builder.serial_number(serial_number);
+        strings = strings.serial_number(serial_number);
     }
-    usb_builder.device_class(0x03).device_sub_class(0).build()
+
+    UsbDeviceBuilder::new(bus_allocator, options.vid_pid())
+        .strings(&[strings])
+        .expect("failed to set USB string descriptors")
+        .device_class(0x03)
+        .device_sub_class(0)
+        .build()
 }
 
 #[derive(Default)]
