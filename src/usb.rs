@@ -144,6 +144,13 @@ impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
 
 impl Classes for DefaultClasses {
     fn poll(&mut self) {
+        // `UsbDevice::poll` only polls classes on bus activity, so queued
+        // application responses have to be picked up here.
+        #[cfg(feature = "ctaphid")]
+        self.ctaphid.check_for_app_response();
+        #[cfg(feature = "ccid")]
+        self.ccid.check_for_app_response();
+
         self.usb_device.poll(&mut [
             #[cfg(feature = "ctaphid")]
             &mut self.ctaphid,
