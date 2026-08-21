@@ -2,7 +2,7 @@
 
 ## Unreleased
 
--
+- Make USB classes and device creation configurable.
 
 [All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.2.0...HEAD)
 
