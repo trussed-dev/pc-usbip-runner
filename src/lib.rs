@@ -1,9 +1,12 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "ccid")]
-mod ccid;
+pub mod ccid;
 #[cfg(feature = "ctaphid")]
-mod ctaphid;
+pub mod ctaphid;
+pub mod usb;
+
+pub use usb::{Classes, DefaultSetup, Dispatches, Setup};
 
 use std::{
     marker::PhantomData,
@@ -31,7 +34,10 @@ use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
     device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
 };
-use usbip_device::UsbIpBus;
+// Classes must be built against these: `usbip-device` is a pinned git dep, so a
+// separately declared one yields a distinct `UsbIpBus` that will not unify.
+pub use usb_device;
+pub use usbip_device::UsbIpBus;
 
 static IS_WAITING: AtomicBool = AtomicBool::new(false);
 
@@ -140,41 +146,39 @@ impl platform::Platform for Platform {
     }
 }
 
-pub struct Runner<D, A> {
+pub struct Runner<D, A, S = DefaultSetup> {
     options: Options,
     dispatch: D,
+    setup: S,
     _marker: PhantomData<A>,
 }
 
-impl<'interrupt, D, A> Runner<D, A>
+impl<'interrupt, D, A, S> Runner<D, A, S>
 where
     D: Dispatch + Send,
     D::BackendId: Send + Sync,
     D::Context: Send + Sync,
     A: Apps<'interrupt, D>,
+    S: Setup<D>,
 {
     pub fn builder(options: Options) -> Builder {
         Builder::new(options)
     }
 
-    pub fn exec(self, platform: Platform, data: A::Data) {
+    pub fn exec(self, platform: Platform, data: A::Data)
+    where
+        S::Dispatches: Dispatches<A>,
+    {
+        // Leaked to give the classes a `'static` bus; `exec` never returns and
+        // `UsbIpBus::new` binds port 3240 exclusively.
         // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
-        let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
+        let bus_allocator: &'static UsbBusAllocator<UsbIpBus> =
+            Box::leak(Box::new(UsbBusAllocator::new(UsbIpBus::new())));
+        // `UsbDevice` unifies the allocator and string-descriptor borrows.
+        let options: &'static Options = Box::leak(Box::new(self.options));
 
-        #[cfg(feature = "ctaphid")]
-        let ctap_channel = ctaphid_dispatch::Channel::new();
-        #[cfg(feature = "ctaphid")]
-        let (mut ctaphid, mut ctaphid_dispatch) = ctaphid::setup::<
-            _,
-            { ctaphid_dispatch::DEFAULT_MESSAGE_SIZE },
-        >(&bus_allocator, &ctap_channel);
+        let (mut classes, mut dispatches) = self.setup.setup(bus_allocator, options);
 
-        #[cfg(feature = "ccid")]
-        let (contact, contactless) = Default::default();
-        #[cfg(feature = "ccid")]
-        let (mut ccid, mut apdu_dispatch) = ccid::setup(&bus_allocator, &contact, &contactless);
-
-        let mut usb_device = build_device(&bus_allocator, &self.options);
         let mut service = Service::with_dispatch(platform, self.dispatch);
         let mut endpoints = Vec::new();
         let (syscall_sender, syscall_receiver) = mpsc::channel();
@@ -185,25 +189,11 @@ where
         thread::scope(|s| {
             // usb poll + keepalive task
             s.spawn(move || {
-                let _epoch = Instant::now();
-                #[cfg(feature = "ctaphid")]
-                let mut timeout_ctaphid = Timeout::new();
-                #[cfg(feature = "ccid")]
-                let mut timeout_ccid = Timeout::new();
-
+                let epoch = Instant::now();
                 loop {
                     thread::sleep(Duration::from_millis(5));
-                    usb_device.poll(&mut [
-                        #[cfg(feature = "ctaphid")]
-                        &mut ctaphid,
-                        #[cfg(feature = "ccid")]
-                        &mut ccid,
-                    ]);
-
-                    #[cfg(feature = "ctaphid")]
-                    ctaphid::keepalive(&mut ctaphid, &mut timeout_ctaphid, _epoch);
-                    #[cfg(feature = "ccid")]
-                    ccid::keepalive(&mut ccid, &mut timeout_ccid, _epoch);
+                    classes.poll();
+                    classes.keepalive(epoch);
                 }
             });
 
@@ -217,18 +207,16 @@ where
             // apps task
             loop {
                 thread::sleep(Duration::from_millis(5));
-                #[cfg(feature = "ctaphid")]
-                apps.with_ctaphid_apps(|apps| ctaphid_dispatch.poll(apps));
-                #[cfg(feature = "ccid")]
-                apps.with_ccid_apps(|apps| apdu_dispatch.poll(apps));
+                dispatches.poll(&mut apps);
             }
         });
     }
 }
 
-pub struct Builder<D = CoreOnly> {
+pub struct Builder<D = CoreOnly, S = DefaultSetup> {
     options: Options,
     dispatch: D,
+    setup: S,
 }
 
 impl Builder {
@@ -236,24 +224,36 @@ impl Builder {
         Self {
             options,
             dispatch: Default::default(),
+            setup: DefaultSetup,
         }
     }
 }
 
-impl<D> Builder<D> {
-    pub fn dispatch<E>(self, dispatch: E) -> Builder<E> {
+impl<D, S> Builder<D, S> {
+    pub fn dispatch<E>(self, dispatch: E) -> Builder<E, S> {
         Builder {
             options: self.options,
             dispatch,
+            setup: self.setup,
+        }
+    }
+
+    /// Uses a custom set of USB classes instead of the feature-gated defaults.
+    pub fn usb<T>(self, setup: T) -> Builder<D, T> {
+        Builder {
+            options: self.options,
+            dispatch: self.dispatch,
+            setup,
         }
     }
 }
 
-impl<D: Dispatch> Builder<D> {
-    pub fn build<'interrupt, A: Apps<'interrupt, D>>(self) -> Runner<D, A> {
+impl<D: Dispatch, S: Setup<D>> Builder<D, S> {
+    pub fn build<'interrupt, A: Apps<'interrupt, D>>(self) -> Runner<D, A, S> {
         Runner {
             options: self.options,
             dispatch: self.dispatch,
+            setup: self.setup,
             _marker: Default::default(),
         }
     }
@@ -269,7 +269,9 @@ impl trussed::platform::Syscall for Syscall {
     }
 }
 
-fn build_device<'a, B: UsbBus>(
+/// Builds a device from [`Options`]. Must be called after all classes are
+/// allocated: building freezes the allocator.
+pub fn build_device<'a, B: UsbBus>(
     bus_allocator: &'a UsbBusAllocator<B>,
     options: &'a Options,
 ) -> UsbDevice<'a, B> {
@@ -298,11 +300,12 @@ fn build_device<'a, B: UsbBus>(
 pub struct Timeout(Option<Duration>);
 
 impl Timeout {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self::default()
     }
 
-    fn update<F: FnOnce() -> Option<Duration>>(
+    /// Arms the timer from `keepalive`, or fires `f` and re-arms once expired.
+    pub fn update<F: FnOnce() -> Option<Duration>>(
         &mut self,
         epoch: Instant,
         keepalive: Option<Duration>,
