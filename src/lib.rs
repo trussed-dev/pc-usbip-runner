@@ -30,10 +30,7 @@ use trussed::{
     virt::UserInterface,
     ClientImplementation,
 };
-use usb_device::{
-    bus::{UsbBus, UsbBusAllocator},
-    device::{UsbDevice, UsbDeviceBuilder, UsbVidPid},
-};
+use usb_device::{bus::UsbBusAllocator, device::UsbVidPid};
 
 pub use usb_device;
 pub use usbip_device::UsbIpBus;
@@ -266,33 +263,6 @@ impl trussed::platform::Syscall for Syscall {
         log::debug!("syscall");
         self.0.send(()).ok();
     }
-}
-
-/// Builds a device from [`Options`]. Must be called after all classes are
-/// allocated: building freezes the allocator.
-pub fn build_device<'a, B: UsbBus>(
-    bus_allocator: &'a UsbBusAllocator<B>,
-    options: &'a Options,
-) -> UsbDevice<'a, B> {
-    use usb_device::prelude::{LangID, StringDescriptors};
-
-    let mut strings = StringDescriptors::new(LangID::EN_US);
-    if let Some(manufacturer) = &options.manufacturer {
-        strings = strings.manufacturer(manufacturer);
-    }
-    if let Some(product) = &options.product {
-        strings = strings.product(product);
-    }
-    if let Some(serial_number) = &options.serial_number {
-        strings = strings.serial_number(serial_number);
-    }
-
-    UsbDeviceBuilder::new(bus_allocator, options.vid_pid())
-        .strings(&[strings])
-        .expect("failed to set USB string descriptors")
-        .device_class(0x03)
-        .device_sub_class(0)
-        .build()
 }
 
 #[derive(Default)]

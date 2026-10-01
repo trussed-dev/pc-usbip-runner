@@ -7,8 +7,10 @@
 use std::marker::PhantomData;
 use std::time::Instant;
 
-use usb_device::bus::UsbBusAllocator;
-use usb_device::device::UsbDevice;
+use usb_device::{
+    bus::{UsbBus, UsbBusAllocator},
+    device::{UsbDevice, UsbDeviceBuilder},
+};
 use usbip_device::UsbIpBus;
 
 use crate::{Apps, Options};
@@ -117,7 +119,7 @@ impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
         #[cfg(feature = "ccid")]
         let (ccid, apdu_dispatch) = crate::ccid::setup(allocator, &CONTACT, &CONTACTLESS);
 
-        let usb_device = crate::build_device(allocator, options);
+        let usb_device = build_device(allocator, options);
 
         (
             DefaultClasses {
@@ -176,4 +178,31 @@ impl<D: trussed::backend::Dispatch, A: Apps<'static, D>> Dispatches<A> for Defau
         apps.with_ccid_apps(|apps| self.apdu.poll(apps));
         let _ = apps;
     }
+}
+
+/// Builds a device from [`Options`]. Must be called after all classes are
+/// allocated: building freezes the allocator.
+pub fn build_device<'a, B: UsbBus>(
+    bus_allocator: &'a UsbBusAllocator<B>,
+    options: &'a Options,
+) -> UsbDevice<'a, B> {
+    use usb_device::prelude::{LangID, StringDescriptors};
+
+    let mut strings = StringDescriptors::new(LangID::EN_US);
+    if let Some(manufacturer) = &options.manufacturer {
+        strings = strings.manufacturer(manufacturer);
+    }
+    if let Some(product) = &options.product {
+        strings = strings.product(product);
+    }
+    if let Some(serial_number) = &options.serial_number {
+        strings = strings.serial_number(serial_number);
+    }
+
+    UsbDeviceBuilder::new(bus_allocator, options.vid_pid())
+        .strings(&[strings])
+        .expect("failed to set USB string descriptors")
+        .device_class(0x03)
+        .device_sub_class(0)
+        .build()
 }
