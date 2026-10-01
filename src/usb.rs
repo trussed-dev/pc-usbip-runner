@@ -56,13 +56,12 @@ pub trait Dispatches<A> {
 
 /// Creates the USB device, its classes and the matching dispatchers.
 ///
-/// The allocator is leaked by [`Runner::exec`][crate::Runner::exec], so
-/// everything built here may be `'static`.
-///
 /// `D` is the trussed backend dispatch the apps are built against.
 pub trait Setup<D> {
     /// Moved to the USB thread; must not hold the allocator, which is `!Send`.
-    type Classes: Classes;
+    type Classes<'a>: Classes
+    where
+        Self: 'a;
     /// Kept on the thread that owns the apps.
     type Dispatches;
 
@@ -70,10 +69,10 @@ pub trait Setup<D> {
     ///
     /// The device must be built last: building freezes the allocator and any
     /// later endpoint, interface or string allocation panics.
-    fn setup(
-        self,
-        allocator: &'static UsbBusAllocator<UsbIpBus>,
-    ) -> (Self::Classes, Self::Dispatches);
+    fn setup<'a>(
+        &'a self,
+        allocator: &'a UsbBusAllocator<UsbIpBus>,
+    ) -> (Self::Classes<'a>, Self::Dispatches);
 }
 
 /// The classes selected by the `ccid` and `ctaphid` features.
@@ -89,14 +88,14 @@ impl DefaultSetup {
 const CTAP_MESSAGE_SIZE: usize = ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
 
 /// [`DefaultSetup`]'s device and classes.
-pub struct DefaultClasses {
-    usb_device: UsbDevice<'static, UsbIpBus>,
+pub struct DefaultClasses<'a> {
+    usb_device: UsbDevice<'a, UsbIpBus>,
     #[cfg(feature = "ctaphid")]
-    ctaphid: usbd_ctaphid::CtapHid<'static, 'static, 'static, UsbIpBus, CTAP_MESSAGE_SIZE>,
+    ctaphid: usbd_ctaphid::CtapHid<'a, 'static, 'static, UsbIpBus, CTAP_MESSAGE_SIZE>,
     #[cfg(feature = "ctaphid")]
     timeout_ctaphid: crate::Timeout,
     #[cfg(feature = "ccid")]
-    ccid: usbd_ccid::Ccid<'static, 'static, UsbIpBus, 3072>,
+    ccid: usbd_ccid::Ccid<'a, 'static, UsbIpBus, 3072>,
     #[cfg(feature = "ccid")]
     timeout_ccid: crate::Timeout,
 }
@@ -111,13 +110,13 @@ pub struct DefaultDispatches<D = trussed::backend::CoreOnly> {
 }
 
 impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
-    type Classes = DefaultClasses;
+    type Classes<'a> = DefaultClasses<'a>;
     type Dispatches = DefaultDispatches<D>;
 
-    fn setup(
-        self,
-        allocator: &'static UsbBusAllocator<UsbIpBus>,
-    ) -> (DefaultClasses, DefaultDispatches<D>) {
+    fn setup<'a>(
+        &'a self,
+        allocator: &'a UsbBusAllocator<UsbIpBus>,
+    ) -> (DefaultClasses<'a>, DefaultDispatches<D>) {
         #[cfg(feature = "ctaphid")]
         static CTAP_CHANNEL: ctaphid_dispatch::Channel<CTAP_MESSAGE_SIZE> =
             ctaphid_dispatch::Channel::new();
@@ -137,8 +136,7 @@ impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
         #[cfg(feature = "ccid")]
         let (ccid, apdu_dispatch) = crate::ccid::setup(allocator, &CONTACT, &CONTACTLESS);
 
-        let options: &'static Options = Box::leak(Box::new(self.0));
-        let usb_device = build_device(allocator, options);
+        let usb_device = build_device(allocator, &self.0);
 
         (
             DefaultClasses {
@@ -163,7 +161,7 @@ impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
     }
 }
 
-impl Classes for DefaultClasses {
+impl Classes for DefaultClasses<'_> {
     fn poll(&mut self) {
         // `UsbDevice::poll` only polls classes on bus activity, so queued
         // application responses have to be picked up here.

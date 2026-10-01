@@ -148,13 +148,9 @@ where
     where
         S::Dispatches: Dispatches<A>,
     {
-        // Leaked to give the classes a `'static` bus; `exec` never returns and
-        // `UsbIpBus::new` binds port 3240 exclusively.
         // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
-        let bus_allocator: &'static UsbBusAllocator<UsbIpBus> =
-            Box::leak(Box::new(UsbBusAllocator::new(UsbIpBus::new())));
-
-        let (mut classes, mut dispatches) = self.setup.setup(bus_allocator);
+        let bus_allocator = UsbBusAllocator::new(UsbIpBus::new());
+        let (mut classes, mut dispatches) = self.setup.setup(&bus_allocator);
 
         let mut service = Service::with_dispatch(platform, self.dispatch);
         let mut endpoints = Vec::new();
