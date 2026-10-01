@@ -276,7 +276,7 @@ pub fn build_device<'a, B: UsbBus>(
 ) -> UsbDevice<'a, B> {
     use usb_device::prelude::{LangID, StringDescriptors};
 
-    let mut strings = StringDescriptors::new(LangID::EN);
+    let mut strings = StringDescriptors::new(LangID::EN_US);
     if let Some(manufacturer) = &options.manufacturer {
         strings = strings.manufacturer(manufacturer);
     }
