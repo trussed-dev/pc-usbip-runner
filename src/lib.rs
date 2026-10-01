@@ -30,7 +30,9 @@ use trussed::{
     virt::UserInterface,
     ClientImplementation,
 };
-use usb_device::{bus::UsbBusAllocator, device::UsbVidPid};
+use usb_device::bus::UsbBusAllocator;
+
+use self::usb::Options;
 
 pub use usb_device;
 pub use usbip_device::UsbIpBus;
@@ -44,20 +46,6 @@ pub fn set_waiting(waiting: bool) {
 pub type Client<D = CoreOnly> = ClientImplementation<'static, Syscall, D>;
 
 pub type InitPlatform = Box<dyn Fn(&mut Platform)>;
-
-pub struct Options {
-    pub manufacturer: Option<String>,
-    pub product: Option<String>,
-    pub serial_number: Option<String>,
-    pub vid: u16,
-    pub pid: u16,
-}
-
-impl Options {
-    fn vid_pid(&self) -> UsbVidPid {
-        UsbVidPid(self.vid, self.pid)
-    }
-}
 
 pub trait Apps<'interrupt, D: Dispatch> {
     type Data;
@@ -143,7 +131,6 @@ impl platform::Platform for Platform {
 }
 
 pub struct Runner<D, A, S = DefaultSetup> {
-    options: Options,
     dispatch: D,
     setup: S,
     _marker: PhantomData<A>,
@@ -157,10 +144,6 @@ where
     A: Apps<'interrupt, D>,
     S: Setup<D>,
 {
-    pub fn builder(options: Options) -> Builder {
-        Builder::new(options)
-    }
-
     pub fn exec(self, platform: Platform, data: A::Data)
     where
         S::Dispatches: Dispatches<A>,
@@ -170,10 +153,8 @@ where
         // To change IP or port see usbip-device-0.1.4/src/handler.rs:26
         let bus_allocator: &'static UsbBusAllocator<UsbIpBus> =
             Box::leak(Box::new(UsbBusAllocator::new(UsbIpBus::new())));
-        // `UsbDevice` unifies the allocator and string-descriptor borrows.
-        let options: &'static Options = Box::leak(Box::new(self.options));
 
-        let (mut classes, mut dispatches) = self.setup.setup(bus_allocator, options);
+        let (mut classes, mut dispatches) = self.setup.setup(bus_allocator);
 
         let mut service = Service::with_dispatch(platform, self.dispatch);
         let mut endpoints = Vec::new();
@@ -210,17 +191,24 @@ where
 }
 
 pub struct Builder<D = CoreOnly, S = DefaultSetup> {
-    options: Options,
     dispatch: D,
     setup: S,
 }
 
 impl Builder {
-    pub fn new(options: Options) -> Self {
+    pub fn with_default_usb_classes(options: Options) -> Self {
         Self {
-            options,
             dispatch: Default::default(),
-            setup: DefaultSetup,
+            setup: DefaultSetup::new(options),
+        }
+    }
+}
+
+impl<S> Builder<CoreOnly, S> {
+    pub fn with_usb_classes(setup: S) -> Self {
+        Self {
+            dispatch: CoreOnly,
+            setup,
         }
     }
 }
@@ -228,16 +216,14 @@ impl Builder {
 impl<D, S> Builder<D, S> {
     pub fn dispatch<E>(self, dispatch: E) -> Builder<E, S> {
         Builder {
-            options: self.options,
             dispatch,
             setup: self.setup,
         }
     }
 
     /// Uses a custom set of USB classes instead of the feature-gated defaults.
-    pub fn usb<T>(self, setup: T) -> Builder<D, T> {
+    pub fn usb_classes<T>(self, setup: T) -> Builder<D, T> {
         Builder {
-            options: self.options,
             dispatch: self.dispatch,
             setup,
         }
@@ -247,7 +233,6 @@ impl<D, S> Builder<D, S> {
 impl<D: Dispatch, S: Setup<D>> Builder<D, S> {
     pub fn build<'interrupt, A: Apps<'interrupt, D>>(self) -> Runner<D, A, S> {
         Runner {
-            options: self.options,
             dispatch: self.dispatch,
             setup: self.setup,
             _marker: Default::default(),

@@ -148,7 +148,7 @@ fn main() {
         efs: ram_filesystem(),
         vfs: ram_filesystem(),
     };
-    let options = trussed_usbip::Options {
+    let options = trussed_usbip::usb::Options {
         manufacturer: Some(args.manufacturer),
         product: Some(args.name),
         serial_number: None,
@@ -158,7 +158,7 @@ fn main() {
 
     log::info!("Initializing Trussed");
     let platform = Platform::new(store);
-    trussed_usbip::Builder::new(options)
+    trussed_usbip::Builder::with_default_usb_classes(options)
         .build::<Apps<_>>()
         .exec(platform, ());
 }

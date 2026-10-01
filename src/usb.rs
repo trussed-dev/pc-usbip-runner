@@ -2,18 +2,33 @@
 //!
 //! [`Runner::exec`][crate::Runner::exec] owns the bus and the poll loop, but not
 //! the class list. Implement [`Setup`] to provide your own classes and select it
-//! with [`Builder::usb`][crate::Builder::usb].
+//! with [`Builder::usb_classes`][crate::Builder::usb_classes].
 
 use std::marker::PhantomData;
 use std::time::Instant;
 
 use usb_device::{
     bus::{UsbBus, UsbBusAllocator},
-    device::{UsbDevice, UsbDeviceBuilder},
+    descriptor::lang_id::LangID,
+    device::{StringDescriptors, UsbDevice, UsbDeviceBuilder, UsbVidPid},
 };
 use usbip_device::UsbIpBus;
 
-use crate::{Apps, Options};
+use crate::Apps;
+
+pub struct Options {
+    pub manufacturer: Option<String>,
+    pub product: Option<String>,
+    pub serial_number: Option<String>,
+    pub vid: u16,
+    pub pid: u16,
+}
+
+impl Options {
+    fn vid_pid(&self) -> UsbVidPid {
+        UsbVidPid(self.vid, self.pid)
+    }
+}
 
 /// The USB device and its classes, driven by the USB thread.
 pub trait Classes: Send {
@@ -58,13 +73,17 @@ pub trait Setup<D> {
     fn setup(
         self,
         allocator: &'static UsbBusAllocator<UsbIpBus>,
-        options: &'static Options,
     ) -> (Self::Classes, Self::Dispatches);
 }
 
 /// The classes selected by the `ccid` and `ctaphid` features.
-#[derive(Default)]
-pub struct DefaultSetup;
+pub struct DefaultSetup(Options);
+
+impl DefaultSetup {
+    pub fn new(options: Options) -> Self {
+        Self(options)
+    }
+}
 
 #[cfg(feature = "ctaphid")]
 const CTAP_MESSAGE_SIZE: usize = ctaphid_dispatch::DEFAULT_MESSAGE_SIZE;
@@ -98,7 +117,6 @@ impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
     fn setup(
         self,
         allocator: &'static UsbBusAllocator<UsbIpBus>,
-        options: &'static Options,
     ) -> (DefaultClasses, DefaultDispatches<D>) {
         #[cfg(feature = "ctaphid")]
         static CTAP_CHANNEL: ctaphid_dispatch::Channel<CTAP_MESSAGE_SIZE> =
@@ -119,6 +137,7 @@ impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
         #[cfg(feature = "ccid")]
         let (ccid, apdu_dispatch) = crate::ccid::setup(allocator, &CONTACT, &CONTACTLESS);
 
+        let options: &'static Options = Box::leak(Box::new(self.0));
         let usb_device = build_device(allocator, options);
 
         (
@@ -186,8 +205,6 @@ pub fn build_device<'a, B: UsbBus>(
     bus_allocator: &'a UsbBusAllocator<B>,
     options: &'a Options,
 ) -> UsbDevice<'a, B> {
-    use usb_device::prelude::{LangID, StringDescriptors};
-
     let mut strings = StringDescriptors::new(LangID::EN_US);
     if let Some(manufacturer) = &options.manufacturer {
         strings = strings.manufacturer(manufacturer);
