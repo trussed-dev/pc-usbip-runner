@@ -2,9 +2,15 @@
 
 ## Unreleased
 
+-
+
+[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.3.0...HEAD)
+
+## [v0.3.0](https://github.com/trussed-dev/pc-usbip-runner/releases/tag/v0.3.0) (2026-10-01)
+
 - Make USB classes and device creation configurable.
 
-[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.2.0...HEAD)
+[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.2.0...v0.3.0)
 
 ## [v0.2.0](https://github.com/trussed-dev/pc-usbip-runner/releases/tag/v0.2.0) (2026-09-09)
 
