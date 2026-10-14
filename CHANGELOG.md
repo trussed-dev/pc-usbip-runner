@@ -2,7 +2,7 @@
 
 ## Unreleased
 
--
+- Consume the `Setup` implementation when creating the USB device.
 
 [All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.3.0...HEAD)
 

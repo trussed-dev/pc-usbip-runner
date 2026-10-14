@@ -149,8 +149,8 @@ fn main() {
         vfs: ram_filesystem(),
     };
     let options = trussed_usbip::usb::Options {
-        manufacturer: Some(args.manufacturer),
-        product: Some(args.name),
+        manufacturer: Some(&args.manufacturer),
+        product: Some(&args.name),
         serial_number: None,
         vid: args.vid,
         pid: args.pid,

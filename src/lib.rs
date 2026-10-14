@@ -130,19 +130,19 @@ impl platform::Platform for Platform {
     }
 }
 
-pub struct Runner<D, A, S = DefaultSetup> {
+pub struct Runner<D, A, S = DefaultSetup<'static>> {
     dispatch: D,
     setup: S,
     _marker: PhantomData<A>,
 }
 
-impl<'interrupt, D, A, S> Runner<D, A, S>
+impl<'a, 'interrupt, D, A, S> Runner<D, A, S>
 where
     D: Dispatch + Send,
     D::BackendId: Send + Sync,
     D::Context: Send + Sync,
     A: Apps<'interrupt, D>,
-    S: Setup<D>,
+    S: Setup<'a, D>,
 {
     pub fn exec(self, platform: Platform, data: A::Data)
     where
@@ -186,13 +186,13 @@ where
     }
 }
 
-pub struct Builder<D = CoreOnly, S = DefaultSetup> {
+pub struct Builder<D = CoreOnly, S = DefaultSetup<'static>> {
     dispatch: D,
     setup: S,
 }
 
-impl Builder {
-    pub fn with_default_usb_classes(options: Options) -> Self {
+impl<'a> Builder<CoreOnly, DefaultSetup<'a>> {
+    pub fn with_default_usb_classes(options: Options<'a>) -> Self {
         Self {
             dispatch: Default::default(),
             setup: DefaultSetup::new(options),
@@ -226,7 +226,7 @@ impl<D, S> Builder<D, S> {
     }
 }
 
-impl<D: Dispatch, S: Setup<D>> Builder<D, S> {
+impl<'a, D: Dispatch, S: Setup<'a, D>> Builder<D, S> {
     pub fn build<'interrupt, A: Apps<'interrupt, D>>(self) -> Runner<D, A, S> {
         Runner {
             dispatch: self.dispatch,

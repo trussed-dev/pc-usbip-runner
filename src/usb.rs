@@ -16,15 +16,15 @@ use usbip_device::UsbIpBus;
 
 use crate::Apps;
 
-pub struct Options {
-    pub manufacturer: Option<String>,
-    pub product: Option<String>,
-    pub serial_number: Option<String>,
+pub struct Options<'a> {
+    pub manufacturer: Option<&'a str>,
+    pub product: Option<&'a str>,
+    pub serial_number: Option<&'a str>,
     pub vid: u16,
     pub pid: u16,
 }
 
-impl Options {
+impl Options<'_> {
     fn vid_pid(&self) -> UsbVidPid {
         UsbVidPid(self.vid, self.pid)
     }
@@ -57,11 +57,12 @@ pub trait Dispatches<A> {
 /// Creates the USB device, its classes and the matching dispatchers.
 ///
 /// `D` is the trussed backend dispatch the apps are built against.
-pub trait Setup<D> {
+pub trait Setup<'a, D> {
     /// Moved to the USB thread; must not hold the allocator, which is `!Send`.
-    type Classes<'a>: Classes
+    type Classes<'b>: Classes
     where
-        Self: 'a;
+        Self: 'b,
+        'a: 'b;
     /// Kept on the thread that owns the apps.
     type Dispatches;
 
@@ -69,17 +70,19 @@ pub trait Setup<D> {
     ///
     /// The device must be built last: building freezes the allocator and any
     /// later endpoint, interface or string allocation panics.
-    fn setup<'a>(
-        &'a self,
-        allocator: &'a UsbBusAllocator<UsbIpBus>,
-    ) -> (Self::Classes<'a>, Self::Dispatches);
+    fn setup<'b>(
+        self,
+        allocator: &'b UsbBusAllocator<UsbIpBus>,
+    ) -> (Self::Classes<'b>, Self::Dispatches)
+    where
+        'a: 'b;
 }
 
 /// The classes selected by the `ccid` and `ctaphid` features.
-pub struct DefaultSetup(Options);
+pub struct DefaultSetup<'a>(Options<'a>);
 
-impl DefaultSetup {
-    pub fn new(options: Options) -> Self {
+impl<'a> DefaultSetup<'a> {
+    pub fn new(options: Options<'a>) -> Self {
         Self(options)
     }
 }
@@ -109,14 +112,20 @@ pub struct DefaultDispatches<D = trussed::backend::CoreOnly> {
     _marker: PhantomData<D>,
 }
 
-impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
-    type Classes<'a> = DefaultClasses<'a>;
+impl<'a, D: trussed::backend::Dispatch> Setup<'a, D> for DefaultSetup<'a> {
+    type Classes<'b>
+        = DefaultClasses<'b>
+    where
+        Self: 'b;
     type Dispatches = DefaultDispatches<D>;
 
-    fn setup<'a>(
-        &'a self,
-        allocator: &'a UsbBusAllocator<UsbIpBus>,
-    ) -> (DefaultClasses<'a>, DefaultDispatches<D>) {
+    fn setup<'b>(
+        self,
+        allocator: &'b UsbBusAllocator<UsbIpBus>,
+    ) -> (DefaultClasses<'b>, DefaultDispatches<D>)
+    where
+        'a: 'b,
+    {
         #[cfg(feature = "ctaphid")]
         static CTAP_CHANNEL: ctaphid_dispatch::Channel<CTAP_MESSAGE_SIZE> =
             ctaphid_dispatch::Channel::new();
@@ -136,7 +145,7 @@ impl<D: trussed::backend::Dispatch> Setup<D> for DefaultSetup {
         #[cfg(feature = "ccid")]
         let (ccid, apdu_dispatch) = crate::ccid::setup(allocator, &CONTACT, &CONTACTLESS);
 
-        let usb_device = build_device(allocator, &self.0);
+        let usb_device = build_device(allocator, self.0);
 
         (
             DefaultClasses {
@@ -201,7 +210,7 @@ impl<D: trussed::backend::Dispatch, A: Apps<'static, D>> Dispatches<A> for Defau
 /// allocated: building freezes the allocator.
 pub fn build_device<'a, B: UsbBus>(
     bus_allocator: &'a UsbBusAllocator<B>,
-    options: &'a Options,
+    options: Options<'a>,
 ) -> UsbDevice<'a, B> {
     let mut strings = StringDescriptors::new(LangID::EN_US);
     if let Some(manufacturer) = &options.manufacturer {
