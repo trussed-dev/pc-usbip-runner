@@ -2,9 +2,15 @@
 
 ## Unreleased
 
+-
+
+[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.4.0...HEAD)
+
+## [v0.4.0](https://github.com/trussed-dev/pc-usbip-runner/releases/tag/v0.4.0) (2026-10-14)
+
 - Consume the `Setup` implementation when creating the USB device.
 
-[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.3.0...HEAD)
+[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.3.0...v0.4.0)
 
 ## [v0.3.0](https://github.com/trussed-dev/pc-usbip-runner/releases/tag/v0.3.0) (2026-10-01)
 
