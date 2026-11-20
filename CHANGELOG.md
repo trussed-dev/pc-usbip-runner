@@ -2,10 +2,16 @@
 
 ## Unreleased
 
+-
+
+[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.5.0...HEAD)
+
+## [v0.5.0](https://github.com/trussed-dev/pc-usbip-runner/releases/tag/v0.5.0) (2026-11-20)
+
 - Vendor a patched version of `usbip-device` instead of using it as a dependency.
   This pulls in the changes from [`usbip-device` PR #10](https://github.com/Sawchord/usbip-device/pull/10) that have not been merged upstream yet.
 
-[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.4.0...HEAD)
+[All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.4.0...v0.5.0)
 
 ## [v0.4.0](https://github.com/trussed-dev/pc-usbip-runner/releases/tag/v0.4.0) (2026-10-14)
 
