@@ -45,3 +45,8 @@ make stop
 ```
 
 Warning: in some cases simulation can sometimes cause kernel faults, which makes the system it is running unstable.
+
+## Vendored Dependencies
+
+This crate vendors a patched version of the `usbip-device` crate.
+See [`src/usbip_device/README.md`](./src/usbip_device/README.md) for more information.

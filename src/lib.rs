@@ -1,5 +1,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+mod usbip_device;
+
 #[cfg(feature = "ccid")]
 pub mod ccid;
 #[cfg(feature = "ctaphid")]
