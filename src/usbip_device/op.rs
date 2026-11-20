@@ -47,7 +47,7 @@ impl OpRequest {
         reader.set_nonblocking(true)?;
         let mut header_buf = [0; 8];
         match reader.read(&mut header_buf) {
-            Ok(bytes_read) if bytes_read == 8 => (),
+            Ok(8) => (),
             Ok(0) => {
                 return Err(Error::new(
                     ErrorKind::NotConnected,
@@ -146,7 +146,7 @@ impl OpResponse {
         };
 
         // Serialize path
-        let str_len = self.path.as_bytes().len();
+        let str_len = self.path.len();
         if str_len > 256 {
             log::warn!("path is longer than 256 bytes");
             return None;
@@ -157,7 +157,7 @@ impl OpResponse {
         result.extend_from_slice(&path_buf);
 
         // Serialize bus_id
-        let str_len = self.bus_id.as_bytes().len();
+        let str_len = self.bus_id.len();
         if str_len > 32 {
             log::warn!("bus_id is longr than 32 bytes");
             return None;

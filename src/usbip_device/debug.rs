@@ -11,7 +11,7 @@ pub struct DbgBuf<'a>(pub &'a [u8]);
 
 impl Debug for DbgBuf<'_> {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        if self.0.len() == 0 {
+        if self.0.is_empty() {
             return f.write_str("[]");
         }
 

@@ -42,7 +42,7 @@ impl UsbIpRequest {
         reader.set_nonblocking(true)?;
         let mut buf = [0; 48];
         match reader.read(&mut buf) {
-            Ok(bytes_read) if bytes_read == 48 => (),
+            Ok(48) => (),
             Ok(0) => {
                 return Err(Error::new(
                     ErrorKind::NotConnected,
@@ -106,8 +106,11 @@ impl UsbIpRequest {
 pub struct UsbIpCmdSubmit {
     pub transfer_flags: TransferFlags,
     pub transfer_buffer_length: i32,
+    #[expect(dead_code)]
     pub start_frame: i32,
+    #[expect(dead_code)]
     pub number_of_packets: i32,
+    #[expect(dead_code)]
     pub interval: i32,
     pub setup: [u8; 8],
 }

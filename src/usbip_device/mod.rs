@@ -158,7 +158,7 @@ impl UsbIpBus {
         Self(Arc::new(Mutex::new(UsbIpBusInner::new())))
     }
 
-    fn lock(&self) -> MutexGuard<UsbIpBusInner> {
+    fn lock(&self) -> MutexGuard<'_, UsbIpBusInner> {
         self.0.lock().unwrap()
     }
 }
