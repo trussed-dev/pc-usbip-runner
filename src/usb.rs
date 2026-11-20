@@ -12,9 +12,8 @@ use usb_device::{
     descriptor::lang_id::LangID,
     device::{StringDescriptors, UsbDevice, UsbDeviceBuilder, UsbVidPid},
 };
-use usbip_device::UsbIpBus;
 
-use crate::Apps;
+use crate::{Apps, UsbIpBus};
 
 pub struct Options<'a> {
     pub manufacturer: Option<&'a str>,

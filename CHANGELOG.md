@@ -2,7 +2,8 @@
 
 ## Unreleased
 
--
+- Vendor a patched version of `usbip-device` instead of using it as a dependency.
+  This pulls in the changes from [`usbip-device` PR #10](https://github.com/Sawchord/usbip-device/pull/10) that have not been merged upstream yet.
 
 [All Changes](https://github.com/trussed-dev/pc-usbip-runner/compare/v0.4.0...HEAD)
 
